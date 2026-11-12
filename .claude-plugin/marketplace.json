@@ -1,0 +1,12 @@
+{
+  "name": "branch-status",
+  "owner": { "name": "branch-status" },
+  "description": "branch-status：分支变更、关联文档、任务概要三个窗格的 Claude Code mod。",
+  "plugins": [
+    {
+      "name": "branch-status",
+      "source": "./",
+      "description": "分支变更、关联文档、任务概要三个窗格。"
+    }
+  ]
+}
