@@ -1,12 +1,12 @@
 {
-  "name": "branch-status",
-  "owner": { "name": "branch-status" },
-  "description": "branch-status：分支变更、关联文档、任务概要三个窗格的 Claude Code mod。",
+  "name": "dev-cockpit",
+  "owner": { "name": "dev-cockpit" },
+  "description": "dev-cockpit：Claude Code 的功能窗格合集（分支变更、关联文档、任务概要，持续增加）。",
   "plugins": [
     {
-      "name": "branch-status",
+      "name": "dev-cockpit",
       "source": "./",
-      "description": "分支变更、关联文档、任务概要三个窗格。"
+      "description": "分支变更、关联文档、任务概要等功能窗格。"
     }
   ]
 }

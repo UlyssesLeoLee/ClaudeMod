@@ -2,7 +2,7 @@
 
 Source: `hooks/core/util.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `3fa553abb126f85c22151f733d974b63c9ded6fc06c077f833823bb755cb4981`
 
 ## Responsibility
 
@@ -17,11 +17,11 @@ None (no engine calls, no imports from features).
 - `normPath(p)` — forward slashes, lower case, no trailing slash.
 - `samePath(a, b)` — `normPath(a) === normPath(b)`.
 - `projectKey(kind, path)` — `${kind}:${normPath(path)}`: the store key of one project's data of one kind.
-- `ancestors(path)` — the path, then each folder above it up to the drive or filesystem root, in `normPath` form: `D:/A/b/c` → `d:/a/b/c`, `d:/a/b`, `d:/a`, `d:/`.
+- `ancestors(path)` — the path, then each folder above it up to the drive or filesystem root, in `normPath` form: `D:/A/b/c` → `d:/a/b/c`, `d:/a/b`, `d:/a`, `d:/`; an empty path gives `[]`.
 - `isAbsolutePath(p)` — drive letter, leading `/` or UNC `\\`.
 - `fullPath(root, p)` — `p` when absolute, else `${root}/${p}`.
 - `fullTime(ms)` — local `YYYY-MM-DD HH:mm`.
-- `relTime(ts, now)` — 刚刚 / N 分钟前 / N 小时前 / N 天前.
+- `relTime(ts, now)` — 刚刚 / N分钟前 / N小时前 / N天前 within 30 days, else the local date `YYYY-MM-DD`.
 
 ## Change Notes
 

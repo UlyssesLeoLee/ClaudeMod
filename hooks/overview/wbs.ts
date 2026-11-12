@@ -1,6 +1,6 @@
 // Pure rules of the task overview: the WBS format, how it is read and counted, the
 // 140-character summary, and the prompts. No `$`, no files: everything here is tested directly.
-import type { Mismatch, MismatchKind, Overview, WbsStatus, WbsTask } from '../types'
+import type { Mismatch, MismatchKind, Overview, WbsStatus, WbsTask } from '../../types'
 
 export const WBS_PATH = 'docs/WBS.md'
 export const SUMMARY_LIMIT = 140

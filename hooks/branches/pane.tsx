@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, On } from 'claude-code'
 
-import type { BranchInfo, Busy, Commit, Detail, Snapshot, Worktree, WorktreePlan } from '../types'
+import type { BranchInfo, Busy, Commit, Detail, Snapshot, Worktree, WorktreePlan } from '../../types'
 import {
   BUILT_IN_PROTECTED,
   LOG_COUNT,
@@ -14,7 +14,6 @@ import {
   baseRefPatterns,
   canDeleteWorktree,
   canRevert,
-  fullTime,
   isBranchName,
 
   mergeRange,
@@ -24,17 +23,15 @@ import {
   parseWorktrees,
   protectedBranches,
   recentAiCount,
-  relTime,
   shownCommits,
   sinceArg,
   unjudgedMerge,
   withMerged,
 } from './logic'
 import type { BranchInput } from './logic'
-import { openDocPane, registerDocLinks, startDocLinks } from './doc-links'
-import { buildLine, noteBuild } from './build'
-import { runGit as git } from './files'
-import { openOverview, registerOverview, startOverview } from './overview'
+import { buildFooter } from '../core/build'
+import { runGit as git } from '../core/files'
+import { fullTime, relTime } from '../core/util'
 
 const PANE = 'branch-status'
 const TITLE = '分支变更'
@@ -48,48 +45,48 @@ const REVERT_TREE = 'branch-status-revert-'
 
 const EMPTY: Snapshot = { branches: [], worktrees: [], at: 0, error: '', warnings: [], me: '' }
 
-const snapshot = atom({ plugin: 'branch-status', key: 'snapshot' } as const, EMPTY, {
+const snapshot = atom({ plugin: 'dev-cockpit', key: 'snapshot' } as const, EMPTY, {
   shape: 'snapshot-10',
 })
 const open = atom(
-  { plugin: 'branch-status', key: 'open' } as const,
+  { plugin: 'dev-cockpit', key: 'open' } as const,
   {} as Record<string, boolean>,
   { shape: 'open-1' },
 )
 // The list last queried in this session; '' until then (the store holds it across sessions).
-const branches = atom({ plugin: 'branch-status', key: 'branches' } as const, '', {
+const branches = atom({ plugin: 'dev-cockpit', key: 'branches' } as const, '', {
   shape: 'branches-2',
 })
 // Branches the person added to the protected list; null until read from the store.
 const added = atom(
-  { plugin: 'branch-status', key: 'protectedAdded' } as const,
+  { plugin: 'dev-cockpit', key: 'protectedAdded' } as const,
   null as string[] | null,
   { shape: 'protectedAdded-1' },
 )
-const busy = atom({ plugin: 'branch-status', key: 'busy' } as const, '' as Busy, {
+const busy = atom({ plugin: 'dev-cockpit', key: 'busy' } as const, '' as Busy, {
   shape: 'busy-1',
 })
 // `<branch>:<sha>` of the revert waiting for its second press, or ''.
-const confirming = atom({ plugin: 'branch-status', key: 'confirming' } as const, '', {
+const confirming = atom({ plugin: 'dev-cockpit', key: 'confirming' } as const, '', {
   shape: 'confirming-1',
 })
 // The outcome of each revert, by commit sha.
 const reverts = atom(
-  { plugin: 'branch-status', key: 'reverts' } as const,
+  { plugin: 'dev-cockpit', key: 'reverts' } as const,
   {} as Record<string, string>,
   { shape: 'reverts-1' },
 )
 
 // Recent AI commits of the last query, for the band: counted once per query, not per redraw.
-const alarm = atom({ plugin: 'branch-status', key: 'alarm' } as const, 0, { shape: 'alarm-1' })
+const alarm = atom({ plugin: 'dev-cockpit', key: 'alarm' } as const, 0, { shape: 'alarm-1' })
 const wtPlan = atom(
-  { plugin: 'branch-status', key: 'wtPlan' } as const,
+  { plugin: 'dev-cockpit', key: 'wtPlan' } as const,
   null as WorktreePlan | null,
   { shape: 'wtPlan-1' },
 )
-const wtNote = atom({ plugin: 'branch-status', key: 'wtNote' } as const, '', { shape: 'wtNote-1' })
+const wtNote = atom({ plugin: 'dev-cockpit', key: 'wtNote' } as const, '', { shape: 'wtNote-1' })
 const detail = atom(
-  { plugin: 'branch-status', key: 'detail' } as const,
+  { plugin: 'dev-cockpit', key: 'detail' } as const,
   null as Detail | null,
   { shape: 'detail-1' },
 )
@@ -108,8 +105,13 @@ let draft: string | undefined
 // One git job at a time: set before the first await, so a second press can't slip in.
 let running = false
 
-function openPane($: EngineInterface) {
+export function openBranchPane($: EngineInterface) {
   return $.ui.open({ id: PANE, title: TITLE })
+}
+
+/** AI commits of the last 5 days in the last query: one number, for the band. */
+export function branchAlarm($: EngineInterface): Promise<number> {
+  return read($, alarm)
 }
 
 
@@ -439,34 +441,27 @@ async function pushRevert($: EngineInterface, branch: string, c: Commit): Promis
   }
 }
 
-export const register: Register = on => {
-  // Opens the pane empty. No git here: it runs only when the person presses 加载Git or 查询分支.
-  on('session.start', async ($, e, next) => {
-    await update($, busy, () => '')
-    await update($, confirming, () => '')
-    await update($, wtPlan, () => null)
-    await $.command.register({
-      name: 'branch-status',
-      description: '打开分支变更面板；带分支名（/branch-status master develop）则按它们查询',
-    })
-    await startDocLinks($)
-    await startOverview($)
-    await noteBuild($)
-    void openPane($)
-    return next(e)
+// The branch feature's part of session start, called from the mod's one session.start
+// hook. No git here: it runs only when the person presses 加载Git or 查询分支.
+export async function startBranches($: EngineInterface) {
+  await update($, busy, () => '')
+  await update($, confirming, () => '')
+  await update($, wtPlan, () => null)
+  await $.command.register({
+    name: 'branch-status',
+    description: '打开分支变更面板；带分支名（/branch-status master develop）则按它们查询',
   })
+}
 
+export function registerBranches(on: On) {
   // `/branch-status master develop` sets the list and queries it: the way to change
   // branches where a surface draws no input field.
   on('command.run', { command: 'branch-status' }, async ($, e) => {
-    await openPane($)
+    await openBranchPane($)
     if (e.args.trim() === '') return { text: '已打开分支变更面板，点「加载Git」才会读取 Git。' }
     if (!(await query($, e.args))) return { text: '正在处理上一次操作，等它结束后再试。' }
     return { text: `已按 ${(await read($, branches)) || '默认分支'} 查询。` }
   })
-
-  registerDocLinks(on)
-  registerOverview(on)
 
   on('ui.render', { component: 'Pane', requestId: DETAIL_PANE }, async ($, e) => {
     const { Box, Text } = $.ui.resolve(e)
@@ -514,24 +509,6 @@ export const register: Register = on => {
     )
   })
 
-  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey) return next(e)
-    const { Box, Button } = $.ui.resolve(e)
-    // The band redraws often: it reads one number, never the whole snapshot.
-    const alarms = await read($, alarm)
-    return (
-      <Box justifyContent="flex-end">
-        <Button key="open-overview" label="📋 任务概要" onPress={() => openOverview($)} />
-        <Button key="open-docs" label="📚 关联文档" onPress={() => openDocPane($)} />
-        <Button
-          key="open-branches"
-          label={alarms > 0 ? `🚨 分支记录 · 近5天 AI×${alarms}` : '🌿 分支记录'}
-          onPress={() => openPane($)}
-        />
-      </Box>
-    )
-  })
-
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Button, Input, Text } = $.ui.resolve(e)
     const s = await read($, snapshot)
@@ -541,7 +518,7 @@ export const register: Register = on => {
     const outcomes = await read($, reverts)
     const plan = await read($, wtPlan)
     const note = await read($, wtNote)
-    const built = await buildLine($)
+    const footer = await buildFooter($, e)
     const saved = await savedBranches($)
     const guarded = await readProtected($)
     const ownGuarded = await readAdded($)
@@ -783,11 +760,7 @@ export const register: Register = on => {
             ))}
           </Box>
         )}
-        {built !== '' && (
-          <Box marginTop={1}>
-            <Text dimColor>{built}</Text>
-          </Box>
-        )}
+        {footer}
       </Box>
     )
   })

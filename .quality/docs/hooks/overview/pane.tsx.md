@@ -2,7 +2,7 @@
 
 Source: `hooks/overview/pane.tsx`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `1a4c693c2a74c77151248fbd6e31f24f85cbce912b20cc5ab6932af05a09cce9`
 
 ## Responsibility
 
@@ -21,7 +21,7 @@ The 任务概要 feature: the `task-overview` pane and `/task-overview`.
 ## Public Contract
 
 - `startOverview($)`, `registerOverview(on)`, `openOverview($)` (pane id `task-overview`, title 任务概要).
-- State keys under `claude-mod`: `ovResult`, `ovBusy`, `ovConfirm`, `ovNote`.
+- State keys under `dev-cockpit`: `ovResult`, `ovBusy`, `ovConfirm`, `ovNote`.
 - Store key `overview:<project root>`.
 - A failed run keeps the last good overview and shows why.
 

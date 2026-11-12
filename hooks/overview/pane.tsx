@@ -1,10 +1,11 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import type { Overview } from '../types'
-import { buildLine } from './build'
-import { projectRoot, runGit } from './files'
-import { fullTime, projectKey, relTime } from './logic'
+import type { Overview } from '../../types'
+import { buildFooter } from '../core/build'
+import { projectRoot, runGit } from '../core/files'
+import { loadNearest, saveForProject } from '../core/store'
+import { fullTime, relTime } from '../core/util'
 import {
   CHECK_SYSTEM,
   MISMATCH_TEXT,
@@ -34,10 +35,10 @@ const EMPTY: Overview = {
   summary: '', isAiSummary: false, mismatches: [], warnings: [], error: '',
 }
 
-const result = atom({ plugin: 'branch-status', key: 'ovResult' } as const, EMPTY, { shape: 'ovResult-1' })
-const busy = atom({ plugin: 'branch-status', key: 'ovBusy' } as const, false, { shape: 'ovBusy-1' })
-const confirm = atom({ plugin: 'branch-status', key: 'ovConfirm' } as const, false, { shape: 'ovConfirm-1' })
-const note = atom({ plugin: 'branch-status', key: 'ovNote' } as const, '', { shape: 'ovNote-1' })
+const result = atom({ plugin: 'dev-cockpit', key: 'ovResult' } as const, EMPTY, { shape: 'ovResult-1' })
+const busy = atom({ plugin: 'dev-cockpit', key: 'ovBusy' } as const, false, { shape: 'ovBusy-1' })
+const confirm = atom({ plugin: 'dev-cockpit', key: 'ovConfirm' } as const, false, { shape: 'ovConfirm-1' })
+const note = atom({ plugin: 'dev-cockpit', key: 'ovNote' } as const, '', { shape: 'ovNote-1' })
 
 // One run at a time: set before the first await.
 let working = false
@@ -46,18 +47,25 @@ export function openOverview($: EngineInterface) {
   return $.ui.open({ id: OVERVIEW_PANE, title: TITLE })
 }
 
-/** This session's overview, else the one kept for this project from an earlier session. */
+// The store kind overviews are kept under, by project root.
+const OVERVIEW_KIND = 'overview'
+
+/**
+ * This session's overview, else the latest kept for the session folder or a folder
+ * above it (the project's root), from an earlier session.
+ */
 async function loadOverview($: EngineInterface): Promise<Overview> {
   const inSession = await read($, result)
   if (inSession.at !== 0 || inSession.error !== '') return inSession
-  return restoredOverview(await $.store.get(projectKey('overview', await $.session.cwd()))) ?? EMPTY
+  return (await loadNearest($, OVERVIEW_KIND, restoredOverview, o => o.at)) ?? EMPTY
 }
 
-// Keeps a good overview in this session and for later ones; an error is never stored.
+// Keeps a good overview in this session and, under the project's root, for later ones;
+// an error is never stored.
 async function saveOverview($: EngineInterface, next: Overview) {
   const kept = { ...next, error: '' }
   await update($, result, () => kept)
-  await $.store.set(projectKey('overview', await $.session.cwd()), kept)
+  await saveForProject($, OVERVIEW_KIND, kept.root || (await $.session.cwd()), kept)
 }
 
 /** The project's WBS: `docs/WBS.md`, any case. */
@@ -182,7 +190,7 @@ export function registerOverview(on: On) {
     const isBusy = await read($, busy)
     const asking = await read($, confirm)
     const said = await read($, note)
-    const built = await buildLine($)
+    const footer = await buildFooter($, e)
     const now = await $.clock.now()
     const today = localDate(now)
     const open = unfinished(r.tasks, today)
@@ -281,11 +289,7 @@ export function registerOverview(on: On) {
             ))}
           </Box>
         )}
-        {built !== '' && (
-          <Box marginTop={1}>
-            <Text dimColor>{built}</Text>
-          </Box>
-        )}
+        {footer}
       </Box>
     )
   })

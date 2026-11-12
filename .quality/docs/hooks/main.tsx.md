@@ -2,11 +2,11 @@
 
 Source: `hooks/main.tsx`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `aabdb019994f77a8f5e429f7773d7df0c4c1501f096c7ba3554e03848c051607`
 
 ## Responsibility
 
-The single hooks module of the `claude-mod` mod (listed in `hooks/hooks.json`). It joins the features into one mod:
+The single hooks module of the `dev-cockpit` mod (listed in `hooks/hooks.json`). It joins the features into one mod:
 
 - The mod's only unmatched `session.start` hook: records which code the session loaded (`noteBuild`), runs each feature's start (`startBranches`, `startDocLinks`, `startOverview`), then opens the branch pane.
 - Registers each feature's hooks: `registerBranches(on)`, `registerDocLinks(on)`, `registerOverview(on)`.
@@ -30,5 +30,5 @@ A new feature is a folder under `hooks/` exporting `startX($)`, `registerX(on)` 
 
 ## Change Notes
 
-- The mod is named `claude-mod`; its state contract and its store live under that name. Data stored under the former plugin name `branch-status` is not read.
+- The mod is named `dev-cockpit`; its state contract and its store live under that name. Data stored under the former plugin name `branch-status` is not read.
 - Pane ids (`branch-status`, `commit-detail`, `doc-links`, `task-overview`) and the three slash commands are unchanged.

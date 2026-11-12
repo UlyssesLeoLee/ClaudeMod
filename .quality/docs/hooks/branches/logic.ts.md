@@ -2,7 +2,7 @@
 
 Source: `hooks/branches/logic.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `d93aeefaed96d8373f76d45a9cd720dc1ef8cbfbab6966e83e712e39c052d975`
 
 ## Responsibility
 

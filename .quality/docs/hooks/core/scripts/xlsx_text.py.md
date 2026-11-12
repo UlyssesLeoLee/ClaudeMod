@@ -2,7 +2,7 @@
 
 Source: `hooks/core/scripts/xlsx_text.py`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `79e7ef65c80d507ef1093ddf244d279f298bc5979e066bbd3025b7ea1583a997`
 
 ## Responsibility
 

@@ -2,8 +2,8 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
-import { UPDATE_HEADER, buildUpdatePrompt, classify, keywords, newLink, personText, storeKey, taskFrom } from '../hooks/doclogic'
-import type { SessionLine } from '../hooks/doclogic'
+import { UPDATE_HEADER, buildUpdatePrompt, classify, keywords, newLink, personText, storeKey, taskFrom } from '../hooks/doclinks/logic'
+import type { SessionLine } from '../hooks/doclinks/logic'
 
 const NOW = Date.UTC(2026, 10, 12, 12)
 const ROOT = 'C:/proj'
@@ -24,6 +24,8 @@ type Docs = {
   messages: SessionLine[]
   // The session's folder, when it is a subfolder of the project.
   cwd?: string
+  // What the mod's reveal script prints (front / opened / missing); unset: it says nothing useful.
+  reveal?: string
   calls: { fs: string[]; process: string[][]; model: string[]; submitted: string[]; toasts: string[]; filled: string[] }
 }
 
@@ -122,6 +124,7 @@ function world(on: On, d: Docs, stored: Record<string, never> = {}) {
       value: { exitCode, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false },
     })
     if (e.argv[0] === 'git') return answer(0, `${ROOT}\n`)
+    if (e.argv[0] === 'powershell.exe' && d.reveal !== undefined) return answer(0, `${d.reveal}\r\n`)
     // As on Windows: explorer.exe exits 1 even when it opened the file.
     if (e.argv[0] === 'explorer.exe') return answer(1)
     if (!d.pythonOk) return answer(1)
@@ -170,7 +173,7 @@ function world(on: On, d: Docs, stored: Record<string, never> = {}) {
 
 function pane(surface: (typeof SURFACES)[number]) {
   return {
-    plugin: 'branch-status',
+    plugin: 'dev-cockpit',
     component: 'Pane',
     requestId: 'doc-links',
     surface,
@@ -214,8 +217,8 @@ test('nothing is scanned, run or asked until 智能关联 is pressed', async ($,
     expect(await shows(ui, /点「智能关联」时，按本会话记录判断当前任务/)).toBe(true)
     await ui.unmount()
   }
-  // Session start reads only the mod's own manifest, for the version line; no project file.
-  expect(d.calls.fs.filter(c => !c.includes('branch-status'))).toEqual([])
+  // Session start reads only the mod's own files, for the version line; no project file.
+  expect(d.calls.fs.filter(c => !/[\\/](\.claude-plugin|hooks)([\\/]|$)/.test(c))).toEqual([])
   expect(d.calls.process.filter(a => a[0] !== 'git')).toEqual([])
   expect(d.calls.model).toEqual([])
 })
@@ -756,6 +759,20 @@ test('📄 打开 opens the file; 📂 文件夹 opens its folder with the file 
   d.files[REQ] = 'missing'
   await ui.press({ key: `doc-reveal-${REQ}` })
   expect(d.calls.process).toContainEqual(['explorer.exe', String.raw`C:\proj\docs`])
+  await ui.unmount()
+})
+
+test('📂 文件夹 runs the mod’s own script, and stops once it brought the window to the front', async ($, on) => {
+  const d = docs({ model: { paths: [REQ] }, reveal: 'front' })
+  world(on, d)
+  const ui = await linked($)
+  await ui.press({ key: `doc-reveal-${REQ}` })
+  const ran = d.calls.process.filter(a => a[0] === 'powershell.exe' || a[0] === 'explorer.exe')
+  expect(ran).toHaveLength(1)
+  const argv = ran[0] ?? []
+  expect(argv.slice(0, 5)).toEqual(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File'])
+  expect((argv[5] ?? '').replace(/\\/g, '/')).toMatch(/\/hooks\/core\/scripts\/reveal\.ps1$/)
+  expect(argv.slice(6)).toEqual(['-Path', String.raw`C:\proj\docs\要件定義書_勤怠.xlsx`, '-Folder', String.raw`C:\proj\docs`])
   await ui.unmount()
 })
 

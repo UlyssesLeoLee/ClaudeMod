@@ -1,7 +1,9 @@
 // Pure rules of the doc pane: which file is which kind of document, what the
 // task is, how the model's ranking is read, and the update prompt's text.
-import type { DocKind, DocLink, DocResult, FileState } from '../types'
-import { projectKey } from './logic'
+import type { DocKind, DocLink, DocResult, FileState } from '../../types'
+import { projectKey } from '../core/util'
+
+export { fullPath, isAbsolutePath } from '../core/util'
 
 // Where documents are looked for, relative to the project root; any top-level folder
 // whose name looks like documents is looked through as well (DOC_FOLDER).
@@ -82,16 +84,6 @@ const RULES: ReadonlyArray<[DocKind, RegExp]> = [
   ['spec', new RegExp(`仕様|规格说明|规格书|規格書|说明书|specification|${token('specs?')}`)],
   ['plan', new RegExp(`計画|计划|ロードマップ|スケジュール|进度表|roadmap|${token('plans?')}|${token('wbs')}`)],
 ]
-
-/** A path that names its drive or starts at the root: a doc from an extra folder. */
-export function isAbsolutePath(p: string): boolean {
-  return /^[A-Za-z]:[\\/]/.test(p) || p.startsWith('/') || p.startsWith('\\\\')
-}
-
-/** Where a candidate's file is: project-relative paths under the root, absolute ones as they are. */
-export function fullPath(root: string, p: string): string {
-  return isAbsolutePath(p) ? p : `${root}/${p}`
-}
 
 /** The words of a folder name, lower-cased, three letters or more: `OA-Partner` → ['partner']. */
 export function nameWords(name: string): string[] {
@@ -346,9 +338,11 @@ export function accepted(links: readonly DocLink[]): DocLink[] {
   return links.map(l => (l.now === null ? l : { ...l, base: l.now }))
 }
 
-/** The key a project's links are kept under across sessions. */
-export function storeKey(cwd: string): string {
-  return projectKey('docLinks', cwd)
+/** The store kind a project's links are kept under, by its root, across sessions. */
+export const DOC_KIND = 'docLinks'
+
+export function storeKey(path: string): string {
+  return projectKey(DOC_KIND, path)
 }
 
 /** A stored result from this version of the pane, or undefined for anything else. */

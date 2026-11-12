@@ -2,7 +2,7 @@
 
 Source: `hooks/doclinks/logic.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `0827e6f5b0cc5631483f164eeded6188aa054eb135520048d7fb538e4d19e0e8`
 
 ## Responsibility
 

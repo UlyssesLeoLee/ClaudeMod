@@ -132,9 +132,13 @@ export type Overview = {
   error: string
 }
 
+// Which code a session loaded: the manifest's version and the newest code file's time
+// (0 unknown, -1 not yet recorded).
+export type Build = { version: string; loadedMs: number }
+
 declare module 'claude-code' {
   interface PluginState {
-    'branch-status': {
+    'dev-cockpit': {
       snapshot: Shaped<Snapshot>
       open: Shaped<Record<string, boolean>>
       branches: Shaped<string>
@@ -174,8 +178,8 @@ declare module 'claude-code' {
       docFolders: Shaped<string[] | null>
       // The doc kinds the person opened in the pane; every kind starts folded.
       docKindOpen: Shaped<Record<string, boolean>>
-      // Which code this session loaded: version and newest file time, shown at each pane's foot.
-      modBuild: Shaped<string>
+      // Which code this session loaded, shown at each pane's foot.
+      modBuild: Shaped<Build>
       // The task overview: this session's copy (the store keeps each project's).
       ovResult: Shaped<Overview>
       ovBusy: Shaped<boolean>

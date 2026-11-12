@@ -1,7 +1,7 @@
 {
-  "name": "branch-status",
-  "version": "0.2.0",
+  "name": "dev-cockpit",
+  "version": "0.3.0",
   "license": "SEE LICENSE IN LICENSE",
-  "description": "分支变更（含 AI 提交报警、撤销自己的 AI 提交、worktree 管理）、关联文档（AI 关联要件定义/设计/UT/IT/ST/SPEC/PLAN，SHA256 跟踪，review 后自动更新）、任务概要（WBS 完成度）三个窗格。",
+  "description": "一个 mod，多个功能窗格：分支变更（AI 提交报警、撤销自己的 AI 提交、worktree 管理）、关联文档（AI 关联要件定义/设计/UT/IT/ST/SPEC/PLAN，SHA256 跟踪，review 后自动更新）、任务概要（WBS 完成度）。",
   "types": "./types/index.d.ts"
 }

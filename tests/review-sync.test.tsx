@@ -2,8 +2,8 @@ import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
-import { UPDATE_HEADER } from '../hooks/doclogic'
-import { editedPath, isCodePath, isReviewText, unchangedDocs } from '../hooks/reviewlogic'
+import { UPDATE_HEADER } from '../hooks/doclinks/logic'
+import { editedPath, isCodePath, isReviewText, unchangedDocs } from '../hooks/doclinks/review'
 
 const NOW = Date.UTC(2026, 10, 12, 12)
 const ROOT = 'C:/proj'
@@ -74,7 +74,7 @@ function engine(on: On, w: World) {
 }
 
 const pane = {
-  plugin: 'branch-status',
+  plugin: 'dev-cockpit',
   component: 'Pane',
   requestId: 'doc-links',
   surface: 'desktop',

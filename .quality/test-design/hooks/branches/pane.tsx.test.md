@@ -2,7 +2,7 @@
 
 Source: `hooks/branches/pane.tsx`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `25626620bb7389d16467370138a53b274fca8e3ebc17cc1e218fbab44983a1b6`
 
 ## Test Strategy
 
@@ -12,15 +12,15 @@ Integration tests in tests/branches.test.tsx with the `claude-code/testing` kit:
 
 | Case ID | Input / Setup | Expected Outcome | Test Location |
 | --- | --- | --- | --- |
-| TC-001 | Session start, pane mounted | No `process.run` | tests/branches.test.tsx "no git runs until 加载Git is pressed" |
-| TC-002 | 加载Git, then field `release/1` + 查询分支 | Defaults queried, then `release/1` | tests/branches.test.tsx "加载Git queries the defaults, then what the field holds" |
-| TC-003 | `/branch-status master develop` | List set and queried | tests/branches.test.tsx "/branch-status <names> sets the list and queries it, for surfaces without a field" |
-| TC-004 | AI commits 2 days and 10 days old | Band counts 1; rows show both, 🚨 on the recent one only | tests/branches.test.tsx "outer alarm counts AI of the last 5 days; inner rows show every AI commit"; "🚨 marks exactly the rows the alarm counts: AI commits of the 5-day window" |
-| TC-005 | Own AI commit vs another person's | ↩ 撤销 on own only; confirm pushes `revert/<hash>` from a throwaway worktree | tests/branches.test.tsx "撤销 is offered on one’s own AI commits only"; "撤销 asks first, then pushes revert/<hash> from a throwaway worktree" |
-| TC-006 | Three worktrees, session in the second | All listed, second highlighted; 🗑 删除 on others, never this or the main one | tests/branches.test.tsx "every worktree is listed under the branches, this one highlighted"; "删除 is offered on other worktrees only, never this one or the main one" |
-| TC-007 | Dirty worktree with unmerged commits and ignored files | Details listed before a forced delete | tests/branches.test.tsx "unsaved changes and unmerged commits are listed before a forced delete"; "files git ignores are listed before a delete takes them" |
-| TC-008 | Row click / 📄 全文 | `ui.open` `commit-detail` with `focus: true`; full message shown | tests/branches.test.tsx "clicking a commit row opens its whole message in a pane of its own"; "every row has a visible 全文 button, and the hover preview a real one" |
-| TC-009 | 🛡 保护 on a queried branch | Joins the default list; kept across sessions | tests/branches.test.tsx "a queried branch can be protected, and then joins the default list"; "the protected list is kept across sessions" |
+| TC-001 | Session start, pane mounted | No `process.run` | tests/branches.test.tsx#no git runs until 加载Git is pressed |
+| TC-002 | 加载Git, then a branch typed in the field and 查询分支 | Defaults queried, then the typed branch | tests/branches.test.tsx#加载Git queries the defaults, then what the field holds |
+| TC-003 | `/branch-status master develop` | List set and queried | tests/branches.test.tsx#/branch-status <names> sets the list and queries it, for surfaces without a field |
+| TC-004 | AI commits inside and outside the 5-day window | The band counts the recent ones; rows show both, 🚨 on the recent ones only | tests/branches.test.tsx#outer alarm counts AI of the last 5 days, inner rows show every AI commit; tests/branches.test.tsx#🚨 marks exactly the rows the alarm counts: AI commits of the 5-day window |
+| TC-005 | Own AI commit vs another person's | ↩ 撤销 on own only; confirm pushes `revert/<hash>` from a throwaway worktree | tests/branches.test.tsx#撤销 is offered on one’s own AI commits only; tests/branches.test.tsx#撤销 asks first, then pushes revert/<hash> from a throwaway worktree |
+| TC-006 | Three worktrees, session in the second | All listed, second highlighted; 🗑 删除 on others, never this or the main one | tests/branches.test.tsx#every worktree is listed under the branches, this one highlighted; tests/branches.test.tsx#删除 is offered on other worktrees only, never this one or the main one |
+| TC-007 | Dirty worktree with unmerged commits and ignored files | Details listed before a forced delete | tests/branches.test.tsx#unsaved changes and unmerged commits are listed before a forced delete; tests/branches.test.tsx#files git ignores are listed before a delete takes them |
+| TC-008 | Row click / 📄 全文 | `ui.open` `commit-detail` with `focus: true`; full message shown | tests/branches.test.tsx#clicking a commit row opens its whole message in a pane of its own; tests/branches.test.tsx#every row has a visible 全文 button, and the hover preview a real one |
+| TC-009 | 🛡 保护 on a queried branch | Joins the default list; kept across sessions | tests/branches.test.tsx#a queried branch can be protected, and then joins the default list; tests/branches.test.tsx#the protected list is kept across sessions |
 
 ## Boundary & Failure Cases
 

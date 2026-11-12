@@ -2,7 +2,7 @@
 
 Source: `hooks/branches/pane.tsx`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `25626620bb7389d16467370138a53b274fca8e3ebc17cc1e218fbab44983a1b6`
 
 ## Responsibility
 
@@ -25,9 +25,9 @@ The 分支变更 feature: the `branch-status` pane, the `commit-detail` pane, an
 - `registerBranches(on)` — `command.run` `branch-status`, `ui.render` panes `branch-status` and `commit-detail`.
 - `openBranchPane($)` — opens the `branch-status` pane (title 分支变更).
 - `branchAlarm($): Promise<number>` — AI commits of the last 5 days in the last query, for the band.
-- State keys under `claude-mod`: `snapshot`, `open`, `branches`, `protectedAdded`, `busy`, `confirming`, `reverts`, `detail`, `alarm`, `wtPlan`, `wtNote`.
+- State keys under `dev-cockpit`: `snapshot`, `open`, `branches`, `protectedAdded`, `busy`, `confirming`, `reverts`, `detail`, `alarm`, `wtPlan`, `wtNote`.
 
 ## Change Notes
 
 - The feature lives in `hooks/branches/`; the band and the session start live in `hooks/main.tsx`.
-- Its store keys (`branches`, `protected`) are kept under the `claude-mod` store.
+- Its store keys (`branches`, `protected`) are kept under the `dev-cockpit` store.

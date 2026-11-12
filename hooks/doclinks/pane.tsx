@@ -1,8 +1,9 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import type { DocLink, DocResult } from '../types'
+import type { DocLink, DocResult } from '../../types'
 import {
+  DOC_KIND,
   DOC_ROOTS,
   KINDS,
   UPDATE_HEADER,
@@ -33,15 +34,15 @@ import {
   keywords,
   parseRanking,
   restored,
-  storeKey,
   taskFrom,
   withSensed,
-} from './doclogic'
-import type { Candidate, DocStatus, SessionLine, Task } from './doclogic'
-import { buildLine } from './build'
-import { openInApp, projectRoot, revealInFolder, runPython, senseFiles } from './files'
-import { fullTime, normPath, projectKey, relTime, samePath } from './logic'
-import { editedPath, isCodePath, isReviewText, unchangedDocs } from './reviewlogic'
+} from './logic'
+import type { Candidate, DocStatus, SessionLine, Task } from './logic'
+import { editedPath, isCodePath, isReviewText, unchangedDocs } from './review'
+import { buildFooter } from '../core/build'
+import { openInApp, projectRoot, revealInFolder, runPython, senseFiles } from '../core/files'
+import { loadNearest, saveForProject } from '../core/store'
+import { fullTime, normPath, projectKey, relTime, samePath } from '../core/util'
 
 export const DOC_PANE = 'doc-links'
 const DOC_TITLE = '关联文档'
@@ -51,45 +52,45 @@ const NO_PYTHON_HASH = '没能用 Python 计算 SHA256 和修改时间，文档�
 const EMPTY: DocResult = { at: 0, checkedAt: 0, root: '', task: '', links: [], found: 0, warnings: [], error: '' }
 
 // This session's copy; the store keeps each project's across sessions.
-const result = atom({ plugin: 'branch-status', key: 'docResult' } as const, EMPTY, {
+const result = atom({ plugin: 'dev-cockpit', key: 'docResult' } as const, EMPTY, {
   shape: 'docResult-3',
 })
 // What the pane is doing: '', 'link' or 'check'.
-const busy = atom({ plugin: 'branch-status', key: 'docBusy' } as const, '', { shape: 'docBusy-2' })
+const busy = atom({ plugin: 'dev-cockpit', key: 'docBusy' } as const, '', { shape: 'docBusy-2' })
 const skip = atom(
-  { plugin: 'branch-status', key: 'docSkip' } as const,
+  { plugin: 'dev-cockpit', key: 'docSkip' } as const,
   {} as Record<string, boolean>,
   { shape: 'docSkip-1' },
 )
-const confirm = atom({ plugin: 'branch-status', key: 'docConfirm' } as const, false, {
+const confirm = atom({ plugin: 'dev-cockpit', key: 'docConfirm' } as const, false, {
   shape: 'docConfirm-1',
 })
-const sentAt = atom({ plugin: 'branch-status', key: 'docSentAt' } as const, 0, {
+const sentAt = atom({ plugin: 'dev-cockpit', key: 'docSentAt' } as const, 0, {
   shape: 'docSentAt-1',
 })
-const syncReview = atom({ plugin: 'branch-status', key: 'syncReview' } as const, false, { shape: 'syncReview-1' })
-const syncEdited = atom({ plugin: 'branch-status', key: 'syncEdited' } as const, [] as string[], {
+const syncReview = atom({ plugin: 'dev-cockpit', key: 'syncReview' } as const, false, { shape: 'syncReview-1' })
+const syncEdited = atom({ plugin: 'dev-cockpit', key: 'syncEdited' } as const, [] as string[], {
   shape: 'syncEdited-1',
 })
-const syncPhase = atom({ plugin: 'branch-status', key: 'syncPhase' } as const, '', { shape: 'syncPhase-1' })
+const syncPhase = atom({ plugin: 'dev-cockpit', key: 'syncPhase' } as const, '', { shape: 'syncPhase-1' })
 const syncBefore = atom(
-  { plugin: 'branch-status', key: 'syncBefore' } as const,
+  { plugin: 'dev-cockpit', key: 'syncBefore' } as const,
   {} as Record<string, string>,
   { shape: 'syncBefore-1' },
 )
-const syncUnchanged = atom({ plugin: 'branch-status', key: 'syncUnchanged' } as const, [] as string[], {
+const syncUnchanged = atom({ plugin: 'dev-cockpit', key: 'syncUnchanged' } as const, [] as string[], {
   shape: 'syncUnchanged-1',
 })
-const syncNote = atom({ plugin: 'branch-status', key: 'syncNote' } as const, '', { shape: 'syncNote-1' })
+const syncNote = atom({ plugin: 'dev-cockpit', key: 'syncNote' } as const, '', { shape: 'syncNote-1' })
 // The extra folders once changed in this session (null: read them from the store).
 // The kinds the person opened; every kind starts folded.
 const kindOpen = atom(
-  { plugin: 'branch-status', key: 'docKindOpen' } as const,
+  { plugin: 'dev-cockpit', key: 'docKindOpen' } as const,
   {} as Record<string, boolean>,
   { shape: 'docKindOpen-1' },
 )
 const folderList = atom(
-  { plugin: 'branch-status', key: 'docFolders' } as const,
+  { plugin: 'dev-cockpit', key: 'docFolders' } as const,
   null as string[] | null,
   { shape: 'docFolders-1' },
 )
@@ -101,18 +102,22 @@ export function openDocPane($: EngineInterface) {
   return $.ui.open({ id: DOC_PANE, title: DOC_TITLE })
 }
 
-/** The links of this project: this session's, else the ones kept from an earlier session. */
+/**
+ * The links of this project: this session's, else the latest kept for the session
+ * folder or a folder above it (the project's root), from an earlier session.
+ */
 async function loadResult($: EngineInterface): Promise<DocResult> {
   const inSession = await read($, result)
   if (inSession.at !== 0 || inSession.error !== '') return inSession
-  return restored(await $.store.get(storeKey(await $.session.cwd()))) ?? EMPTY
+  return (await loadNearest($, DOC_KIND, restored, r => r.at)) ?? EMPTY
 }
 
-// Keeps a good result in this session and for later ones; an error is never stored.
+// Keeps a good result in this session and, under the project's root, for later ones;
+// an error is never stored.
 async function saveResult($: EngineInterface, next: DocResult) {
   const kept = { ...next, error: '' }
   await update($, result, () => kept)
-  await $.store.set(storeKey(await $.session.cwd()), kept)
+  await saveForProject($, DOC_KIND, kept.root || (await $.session.cwd()), kept)
 }
 
 /** The task as this session's record states it, history before this mod loaded included. */
@@ -644,7 +649,7 @@ export function registerDocLinks(on: On) {
     const left = await read($, syncUnchanged)
     const folders = await shownFolders($)
     const openKinds = await read($, kindOpen)
-    const built = await buildLine($)
+    const footer = await buildFooter($, e)
     const now = await $.clock.now()
     const chosen = r.links.filter(l => !off[l.path])
     const changed = r.links.filter(l => docStatus(l) === 'changed').length
@@ -835,11 +840,7 @@ export function registerDocLinks(on: On) {
           </Box>
         )}
         {sent !== 0 && phase === '' && <Text dimColor>上次于 {relTime(sent, now)} 把更新交给 Claude。</Text>}
-        {built !== '' && (
-          <Box marginTop={1}>
-            <Text dimColor>{built}</Text>
-          </Box>
-        )}
+        {footer}
       </Box>
     )
   })

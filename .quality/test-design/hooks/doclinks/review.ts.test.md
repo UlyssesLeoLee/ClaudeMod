@@ -2,7 +2,7 @@
 
 Source: `hooks/doclinks/review.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `6eb90fc9324de9796bfe6ee81cabc200f835fbe7513773cbe3ede1e5ca251f1a`
 
 ## Test Strategy
 
@@ -12,10 +12,10 @@ Unit tests of the rules plus the review-sync integration tests in tests/review-s
 
 | Case ID | Input / Setup | Expected Outcome | Test Location |
 | --- | --- | --- | --- |
-| TC-001 | `isReviewText` on `/code-review`, 审核一下, レビューして, "preview the page" (no whole word `review`) | true, true, true, false | tests/review-sync.test.tsx "the review sync’s rules" |
-| TC-002 | `editedPath('Edit', {file_path: 'src/a.ts'})`, `('Bash', …)` | `src/a.ts`, `''` | tests/review-sync.test.tsx "the review sync’s rules" |
-| TC-003 | `isCodePath` on `src/a.ts`, `docs/x.md`, `.quality/docs/a.md` | true, false, false | tests/review-sync.test.tsx "the review sync’s rules" |
-| TC-004 | `unchangedDocs` with one moved and one unmoved SHA256 | Only the unmoved path | tests/review-sync.test.tsx "after the update turn, a doc whose SHA256 did not move gets the 手动更新 button" |
+| TC-001 | Review words in English, Chinese and Japanese; a text without the word review | true for each review word, false otherwise | tests/review-sync.test.tsx#the review sync’s rules |
+| TC-002 | `editedPath('Edit', {file_path: 'src/a.ts'})`, `('Bash', …)` | `src/a.ts`, `''` | tests/review-sync.test.tsx#the review sync’s rules |
+| TC-003 | `isCodePath` on `src/a.ts`, `docs/x.md`, `.quality/docs/a.md` | true, false, false | tests/review-sync.test.tsx#the review sync’s rules |
+| TC-004 | `unchangedDocs` with one moved and one unmoved SHA256 | Only the unmoved path | tests/review-sync.test.tsx#after the update turn, a doc whose SHA256 did not move gets the 手动更新 button |
 
 ## Boundary & Failure Cases
 

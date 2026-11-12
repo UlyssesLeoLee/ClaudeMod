@@ -2,7 +2,7 @@
 
 Source: `hooks/doclinks/pane.tsx`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `009712899745920853f5256c8a2bde4adc24bda0daeceae2d3eafd733ad808ea`
 
 ## Responsibility
 
@@ -24,7 +24,7 @@ The 关联文档 feature: the `doc-links` pane, `/doc-links`, and the update aft
 ## Public Contract
 
 - `startDocLinks($)`, `registerDocLinks(on)`, `openDocPane($)` (pane id `doc-links`, title 关联文档).
-- State keys under `claude-mod`: `docResult`, `docBusy`, `docSkip`, `docConfirm`, `docSentAt`, `docKindOpen`, `docFolders`, `syncReview`, `syncEdited`, `syncPhase`, `syncBefore`, `syncUnchanged`, `syncNote`.
+- State keys under `dev-cockpit`: `docResult`, `docBusy`, `docSkip`, `docConfirm`, `docSentAt`, `docKindOpen`, `docFolders`, `syncReview`, `syncEdited`, `syncPhase`, `syncBefore`, `syncUnchanged`, `syncNote`.
 - Store keys: `docLinks:<project root>`, `docFolders:<project root>` (and `docFolders:<session folder>` when it differs).
 - Hooks on `prompt.submit`, `turn.start`, `tool.call` never block or alter the event: their own failures are swallowed.
 

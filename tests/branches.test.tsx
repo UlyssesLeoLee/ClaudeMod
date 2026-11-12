@@ -1,7 +1,8 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
-import { BUILT_IN_PROTECTED, canRevert, detectAi, parseBranchInput, parseWorktrees, protectedBranches, relTime } from '../hooks/logic'
+import { BUILT_IN_PROTECTED, canRevert, detectAi, parseBranchInput, parseWorktrees, protectedBranches } from '../hooks/branches/logic'
+import { relTime } from '../hooks/core/util'
 
 const DAY = 86_400_000
 const NOW = Date.UTC(2026, 10, 12, 12)
@@ -179,7 +180,7 @@ function fakeGit(on: On, w: World) {
 
 function pane(surface: (typeof SURFACES)[number]) {
   return {
-    plugin: 'branch-status',
+    plugin: 'dev-cockpit',
     component: 'Pane',
     requestId: 'branch-status',
     surface,
@@ -196,7 +197,7 @@ function pane(surface: (typeof SURFACES)[number]) {
 
 function band(surface: (typeof SURFACES)[number]) {
   return {
-    plugin: 'branch-status',
+    plugin: 'dev-cockpit',
     component: 'AbovePrompt',
     surface,
     props: {

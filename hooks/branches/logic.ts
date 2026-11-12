@@ -1,5 +1,6 @@
 // Pure rules of the branch pane: no `$`, no git. Everything here is tested directly.
-import type { BranchInfo, Commit, Worktree } from '../types'
+import type { BranchInfo, Commit, Worktree } from '../../types'
+import { samePath } from '../core/util'
 
 // Protected branches that are always on the list; the person adds more with 🛡 保护.
 export const BUILT_IN_PROTECTED: readonly string[] = ['master', 'main', 'develop', 'dev']
@@ -138,31 +139,10 @@ export function messageLines(c: Commit): string[] {
   return rest
 }
 
-/** Local `YYYY-MM-DD HH:mm`. */
-export function fullTime(ts: number): string {
-  const d = new Date(ts)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
 /** Only one's own AI change may be reverted: never a person's, never another's AI. */
 export function canRevert(c: Commit, me: string): boolean {
   const mine = me.toLowerCase()
   return c.ai !== '' && mine !== '' && c.authors.every(a => a === mine)
-}
-
-/** A path the way Windows compares it: either slash, any case, no trailing slash. */
-export function normPath(p: string): string {
-  return p.trim().replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase()
-}
-
-export function samePath(a: string, b: string): boolean {
-  return normPath(a) === normPath(b)
-}
-
-/** The store key a pane keeps one project's result under, across sessions. */
-export function projectKey(kind: string, cwd: string): string {
-  return `${kind}:${normPath(cwd)}`
 }
 
 /** Reads `git worktree list --porcelain`; `current` is this session's top level. */
@@ -220,15 +200,4 @@ export function unjudgedMerge(c: Commit): Commit {
 /** AI commits of the 5-day window across branches, each counted once though merged into several. */
 export function recentAiCount(branches: readonly BranchInfo[]): number {
   return new Set(branches.flatMap(b => b.aiRecent)).size
-}
-
-export function relTime(ts: number, now: number): string {
-  const min = Math.floor((now - ts) / 60_000)
-  if (min < 1) return '刚刚'
-  if (min < 60) return `${min}分钟前`
-  if (min < 24 * 60) return `${Math.floor(min / 60)}小时前`
-  if (min < 30 * 24 * 60) return `${Math.floor(min / 1440)}天前`
-  const d = new Date(ts)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }

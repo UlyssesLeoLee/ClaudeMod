@@ -1,7 +1,7 @@
 import { expect, mock, test } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
-import { projectKey } from '../hooks/logic'
+import { projectKey } from '../hooks/core/util'
 import {
   WBS_HEADER_ROW,
   buildCreatePrompt,
@@ -11,7 +11,7 @@ import {
   localDate,
   parseWbs,
   unfinished,
-} from '../hooks/wbs'
+} from '../hooks/overview/wbs'
 
 const NOW = Date.UTC(2026, 10, 12, 12)
 const TODAY = localDate(NOW)
@@ -92,7 +92,7 @@ function engine(on: On, w: World, stored: Record<string, never> = {}) {
 
 function pane(surface: (typeof SURFACES)[number]) {
   return {
-    plugin: 'branch-status',
+    plugin: 'dev-cockpit',
     component: 'Pane',
     requestId: 'task-overview',
     surface,
@@ -120,8 +120,8 @@ test('nothing is read, run or asked before 生成概要 is pressed', async ($, o
     expect(await has(ui, '点「生成概要」')).toBe(true)
     await ui.unmount()
   }
-  // Session start reads only the mod's own manifest, for the version line; no project file.
-  const project = { ...w.calls, fs: w.calls.fs.filter(c => !c.includes('branch-status')) }
+  // Session start reads only the mod's own files, for the version line; no project file.
+  const project = { ...w.calls, fs: w.calls.fs.filter(c => !/[\\/](\.claude-plugin|hooks)([\\/]|$)/.test(c)) }
   expect(project).toEqual({ fs: [], process: [], model: [], submitted: [] })
 })
 

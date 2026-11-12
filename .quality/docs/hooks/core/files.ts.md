@@ -2,7 +2,7 @@
 
 Source: `hooks/core/files.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `1435ce72bb4476c2db19639df4db6bce72c7ca5fe6ca6c4ca3ae6ae848321130`
 
 ## Responsibility
 

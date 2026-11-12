@@ -1,9 +1,14 @@
-// The doc pane's reach outside the module: the mod's Python scripts and the
-// person's default app. Each runs only from a button press.
+// The mod's reach outside the engine: git, the mod's own scripts (hooks/core/scripts)
+// and the person's default apps. Each runs only from a button press or a command.
 import type { EngineInterface } from 'claude-code'
 
-import type { FileState } from '../types'
-import { fullPath } from './doclogic'
+import type { FileState } from '../../types'
+import { fullPath } from './util'
+
+/** Where the mod's own scripts are, wherever the mod is installed. */
+function scriptPath($: EngineInterface, name: string): string {
+  return `${$.plugin.root}/hooks/core/scripts/${name}`
+}
 
 export type Sensed = FileState | 'missing'
 
@@ -23,7 +28,7 @@ export async function projectRoot($: EngineInterface): Promise<string> {
 
 /** Runs one of the mod's scripts with JSON in and out; undefined when no Python answers. */
 export async function runPython($: EngineInterface, cwd: string, script: string, input: unknown) {
-  const path = `${$.plugin.root}/hooks/${script}`
+  const path = scriptPath($, script)
   const init = { cwd, env: { PYTHONUTF8: '1' }, stdin: JSON.stringify(input), timeoutMs: 120_000 }
   for (const argv of [['python', '-I', path], ['py', '-3', '-I', path]]) {
     const ran = await $.process.run(argv, init).catch(() => undefined)
@@ -68,7 +73,7 @@ export async function revealInFolder($: EngineInterface, root: string, path: str
   if (/^[A-Za-z]:/.test(full)) {
     // Windows keeps a window a background process opens behind the active one: the
     // mod's script opens Explorer and then brings that window to the front.
-    const script = `${$.plugin.root}/hooks/reveal.ps1`
+    const script = scriptPath($, 'reveal.ps1')
     const ran = await $.process
       .run(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script, '-Path', win(full), '-Folder', win(folder)], {
         cwd: root,

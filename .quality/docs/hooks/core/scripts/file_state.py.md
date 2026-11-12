@@ -2,7 +2,7 @@
 
 Source: `hooks/core/scripts/file_state.py`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `4d9515fa1556efcebb7ca9c4d87a6bdee6cfdfb62f5e2c4a3cce119a26b9ec3e`
 
 ## Responsibility
 

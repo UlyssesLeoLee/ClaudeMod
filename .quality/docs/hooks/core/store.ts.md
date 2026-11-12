@@ -2,7 +2,7 @@
 
 Source: `hooks/core/store.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `0a737e41293ac7953a69243259f34624039001ed59e397d409901de58b9ae75c`
 
 ## Responsibility
 

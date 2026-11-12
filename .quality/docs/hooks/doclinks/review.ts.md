@@ -2,7 +2,7 @@
 
 Source: `hooks/doclinks/review.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `6eb90fc9324de9796bfe6ee81cabc200f835fbe7513773cbe3ede1e5ca251f1a`
 
 ## Responsibility
 

@@ -2,24 +2,26 @@
 
 Source: `hooks/core/scripts/file_state.py`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `4d9515fa1556efcebb7ca9c4d87a6bdee6cfdfb62f5e2c4a3cce119a26b9ec3e`
 
 ## Test Strategy
 
-The mod's test runner (`claude plugin test`) fakes `process.run`, so its tests check the script's contract (argv, JSON in, JSON out) and not the script itself. The script is checked by running it directly with Python on real files.
+The mod's test runner fakes `process.run`, so tests/doc-links.test.tsx checks how the pane uses the script's answer, and tests/scripts_test.py runs the script itself with Python on real files (`py -3 -m unittest discover -s tests -p "*_test.py"`).
 
 ## Test Cases
 
 | Case ID | Input / Setup | Expected Outcome | Test Location |
 | --- | --- | --- | --- |
-| TC-001 | Fake script answer `{path: {sha256, mtimeMs, size}}` | Pane shows `SHA256 <16 hex>… · 修改于 …` | tests/doc-links.test.tsx "linking records each linked doc’s SHA256 and modification time" |
-| TC-002 | Fake answer `{path: {missing: true}}` | Row shows 文件已不存在 | tests/doc-links.test.tsx "a linked doc deleted from disk shows as missing" |
-| TC-003 | `echo ["<README.md>","<no-such>"] \| py -3 -I hooks/core/scripts/file_state.py` | README entry with its `sha256` equal to `Get-FileHash -Algorithm SHA256`; `{"missing": true}` for the other | Manual check, command in this row |
+| TC-001 | Fake script answer with `sha256`, `mtimeMs`, `size` | Pane shows `SHA256 <16 hex>… · 修改于 …` | tests/doc-links.test.tsx#linking records each linked doc’s SHA256 and modification time |
+| TC-002 | Fake answer `missing: true` | Row shows 文件已不存在 | tests/doc-links.test.tsx#a linked doc deleted from disk shows as missing |
+| TC-003 | A UTF-8 named file and a gone path | SHA256 equal to hashlib's, the file's size and mtime; `{"missing": true}` for the gone one | tests/scripts_test.py::FileStateTest::test_a_file_gets_its_sha256_mtime_and_size_and_a_gone_one_is_missing |
+| TC-004 | A folder path beside a file | `error` of at most 200 characters for the folder; the file still answered | tests/scripts_test.py::FileStateTest::test_an_unreadable_path_reports_an_error_and_the_others_are_still_answered |
+| TC-005 | No paths | `{}` | tests/scripts_test.py::FileStateTest::test_no_paths_give_an_empty_answer |
 
 ## Boundary & Failure Cases
 
-- Empty array → `{}` (TC-003 variant with `[]`).
-- A directory path → `{"error": "PermissionError: …"}` or `IsADirectoryError` by platform; the other paths are still answered.
+- Empty array gives `{}` (TC-005).
+- A path that cannot be read gives an `error` entry while the other paths are still answered (TC-004).
 
 ## Regression Scope
 
