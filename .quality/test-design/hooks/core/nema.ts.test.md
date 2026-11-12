@@ -2,7 +2,7 @@
 
 Source: `hooks/core/nema.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `59528e0d62c26c905e40830fdd296cfaccfb7a5e13ad64c143eec1db947b5f75`
 
 ## Test Strategy
 

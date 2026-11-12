@@ -2,7 +2,7 @@
 
 Source: `hooks/core/nema.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `59528e0d62c26c905e40830fdd296cfaccfb7a5e13ad64c143eec1db947b5f75`
 
 ## Responsibility
 
@@ -17,7 +17,8 @@ Reads `.nema` files, the person's multi-agent document format, and tells what ea
 - 5W1H: records of at most six fields, padded with missing.
 - Graph: a record is a node `ID name…` or an edge `A>e>B`, `A<e<B`, `A=e=B` with a name; IDs match `[A-Za-z][A-Za-z0-9_.:-]*`; node and edge IDs are unique and never overlap; an edge's ends must be nodes.
 - A line with N leading spaces appends one text field to column N of the previous record (graph: column N+1); appending to null or missing is an error (graph: a new column may be filled).
-- Raw Tab, fullwidth space (U+3000) and bare CR are errors. CRLF line endings are read as LF, since Git on Windows checks files out with CRLF.
+- Raw Tab, fullwidth space (U+3000) and bare CR are errors, each with its line. CRLF line endings are read as LF, since Git on Windows checks files out with CRLF, and a leading BOM is dropped.
+- `\e` inside a longer field adds nothing; alone it is the empty string.
 
 Functions:
 
@@ -26,7 +27,8 @@ Functions:
 - `domainChanges(base, now)` — per domain ID: `added`, `removed`, or `changed` (fingerprint or revision differs), with the revision before and after and `isBumped` (revision raised).
 - `changeText(change)` — `\3 修订 2→3 已修改`, `\3 内容已改，修订号未增加（仍为 2）`, `\5 新增（修订 1）`, `\4 已删除`; 5W1H and graph domains show their tag (`\?2`, `\>3`).
 - `nemaSummary(parsed, limit)` — one line per domain for the ranking model: tag, ID, revision, kind, column names, record count, first record; capped at `limit` characters.
-- `nemaTable(parsed, column)` — the first table domain whose columns include `column`, as `{ columns, rows }` of strings (null and missing as `''`), or `undefined`.
+- `nemaTable(parsed, column)` — the first table domain with a column that `column` names (a column name, or a test on names), as `{ columns, rows }` of strings (null and missing as `''`), or `undefined`.
+- `nemaFields(line, n)` — the fields of one line; `fingerprint(text)` — the FNV-1a hex digest used for domains.
 
 ## Dependencies
 

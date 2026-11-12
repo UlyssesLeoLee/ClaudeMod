@@ -32,6 +32,8 @@ type World = {
   opened: string[]
   // While set, `git fetch` waits for it: a query the test holds mid-run.
   gate?: Promise<void>
+  // What `git show` answers: the files a commit changed, and file text by `<rev>:<path>`.
+  show?: { files: string[]; texts: Record<string, string> }
 }
 type Tree = {
   path: string
@@ -110,6 +112,12 @@ function fakeGit(on: On, w: World) {
       value: { exitCode, stdout, stderr, isStdoutTruncated: false, isStderrTruncated: false },
     })
     const all = [...Object.values(w.logs), ...Object.values(w.merged)].flat()
+    const shown = args[0] === '-c' ? args.slice(2) : args
+    if (shown[0] === 'show') {
+      if (shown.includes('--name-only')) return answer(0, (w.show?.files ?? []).map(f => `${f}\n`).join(''))
+      const text = w.show?.texts[shown[1] ?? '']
+      return text === undefined ? answer(128, '', 'fatal: path does not exist') : answer(0, text)
+    }
     switch (args[0]) {
       case 'rev-parse':
         if (args[1] === '--show-toplevel') {
@@ -900,4 +908,41 @@ test('every row has a visible 全文 button, and the hover preview a real one', 
   await ui.press({ key: `more-${id}` })
   expect(w.opened).toContain('commit-detail (focus)')
   await ui.unmount()
+})
+
+test('the detail of a commit that changed a .nema file lists the domains it changed', async ($, on) => {
+  const c = sha('n1')
+  const w = world({
+    logs: { 'origin/master': [{ sha: 'n1', daysAgo: 1 }] },
+    show: {
+      files: ['src/app.ts', 'docs/分工.nema'],
+      texts: {
+        [`${c}^:docs/分工.nema`]: ' \\1 2\nA B\n \\2 1\nC D\n',
+        [`${c}:docs/分工.nema`]: ' \\1 3\nA X\n \\2 1\nC E\n \\3 1\nNEW\n',
+      },
+    },
+  })
+  engine(on, w)
+  const ui = await $.ui.mount(pane('desktop'))
+  await ui.press({ key: 'refresh' })
+  await ui.press({ key: 'toggle-master' })
+  // Git reads a commit's files only on the click.
+  expect(w.calls.some(a => a.includes('show'))).toBe(false)
+  await ui.press({ key: `open-master:${c}` })
+  await ui.unmount()
+
+  const detail = await $.ui.mount({
+    ...pane('desktop'),
+    requestId: 'commit-detail',
+    props: { ...pane('desktop').props, title: '提交详情' },
+  })
+  const texts = (await detail.findAll({ type: 'Text' })).map(t => t.text)
+  expect(texts.some(t => t.includes('.nema 领域变化'))).toBe(true)
+  expect(texts.some(t => t.includes('📐 docs/分工.nema'))).toBe(true)
+  expect(texts.some(t => t.includes('\\1 修订 2→3 已修改'))).toBe(true)
+  expect(texts.some(t => t.includes('\\2 内容已改，修订号未增加（仍为 1）'))).toBe(true)
+  expect(texts.some(t => t.includes('\\3 新增（修订 1）'))).toBe(true)
+  // Only the .nema file was read, at the parent and at the commit.
+  expect(w.calls.filter(a => a[0] === 'show').map(a => a[1])).toEqual([`${c}^:docs/分工.nema`, `${c}:docs/分工.nema`])
+  await detail.unmount()
 })

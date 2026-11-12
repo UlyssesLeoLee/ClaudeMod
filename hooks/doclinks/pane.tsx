@@ -27,6 +27,7 @@ import {
   isAbsolutePath,
   isDocFile,
   isDocFolder,
+  isNemaPath,
   isRelatedFolder,
   parentOf,
   rankingTask,
@@ -41,6 +42,7 @@ import type { Candidate, DocStatus, SessionLine, Task } from './logic'
 import { editedPath, isCodePath, isReviewText, unchangedDocs } from './review'
 import { buildFooter } from '../core/build'
 import { openInApp, projectRoot, revealInFolder, runPython, senseFiles } from '../core/files'
+import { changeText, domainChanges, domainStates, nemaSummary, parseNema } from '../core/nema'
 import { loadNearest, saveForProject } from '../core/store'
 import { fullTime, normPath, projectKey, relTime, samePath } from '../core/util'
 
@@ -357,6 +359,10 @@ async function gather($: EngineInterface): Promise<DocResult> {
     if (/\.(md|markdown|txt)$/i.test(c.path)) {
       const text = await $.fs.read(fullPath(root, c.path)).catch(() => '')
       if (typeof text === 'string') texts.set(c.path, text.slice(0, 1500))
+    } else if (isNemaPath(c.path)) {
+      // A .nema document reaches the model as its domains, not its raw lines.
+      const text = await $.fs.read(fullPath(root, c.path)).catch(() => '')
+      if (typeof text === 'string' && text !== '') texts.set(c.path, nemaSummary(parseNema(text)))
     }
   }
   const ranked = candidates.map(c => {
@@ -391,12 +397,31 @@ async function gather($: EngineInterface): Promise<DocResult> {
     checkedAt: sensed === undefined ? 0 : at,
     root,
     task: asked.slice(0, 300),
-    links: sensed === undefined ? links : withSensed(links, sensed),
+    links: await senseNema($, root, sensed === undefined ? links : withSensed(links, sensed)),
     found: candidates.length,
     suggestions,
     warnings,
     error: '',
   }
+}
+
+/**
+ * Each linked .nema document's domains as they are now; the first reading is also its
+ * base, after that the base moves only when the person accepts the change.
+ */
+async function senseNema($: EngineInterface, root: string, links: readonly DocLink[]): Promise<DocLink[]> {
+  const out: DocLink[] = []
+  for (const l of links) {
+    const text = isNemaPath(l.path) ? await $.fs.read(fullPath(root, l.path)).catch(() => undefined) : undefined
+    if (typeof text !== 'string') {
+      out.push(l)
+      continue
+    }
+    const parsed = parseNema(text)
+    const now = domainStates(parsed)
+    out.push({ ...l, nema: { base: l.nema?.base ?? now, now, error: parsed.error } })
+  }
+  return out
 }
 
 // 检查状态: reads every linked file again; the base stays, so a change shows.
@@ -407,10 +432,12 @@ function check($: EngineInterface) {
     const sensed = await senseFiles($, r.root, r.links.map(l => l.path))
     const others = r.warnings.filter(w => w !== NO_PYTHON_HASH)
     if (sensed === undefined) {
-      await saveResult($, { ...r, warnings: [...others, NO_PYTHON_HASH] })
+      // .nema domains need no Python: they are read again all the same.
+      await saveResult($, { ...r, links: await senseNema($, r.root, r.links), warnings: [...others, NO_PYTHON_HASH] })
       return
     }
-    await saveResult($, { ...r, links: withSensed(r.links, sensed), checkedAt: await $.clock.now(), warnings: others })
+    const links = await senseNema($, r.root, withSensed(r.links, sensed))
+    await saveResult($, { ...r, links, checkedAt: await $.clock.now(), warnings: others })
   })
 }
 
@@ -529,7 +556,8 @@ async function verifyUpdate($: EngineInterface) {
     return
   }
   const left = unchangedDocs(before, sensed)
-  await saveResult($, { ...r, links: withSensed(r.links, sensed), checkedAt: await $.clock.now() })
+  const links = await senseNema($, r.root, withSensed(r.links, sensed))
+  await saveResult($, { ...r, links, checkedAt: await $.clock.now() })
   await update($, syncUnchanged, () => left)
   await update($, syncNote, () =>
     left.length === 0
@@ -794,6 +822,21 @@ export function registerDocLinks(on: On) {
                         <Box paddingLeft={4}>
                           <Text dimColor wrap="truncate-end">
                             {l.reason}
+                          </Text>
+                        </Box>
+                      )}
+                      {l.nema !== undefined &&
+                        domainChanges(l.nema.base, l.nema.now).map(ch => (
+                          <Box paddingLeft={4}>
+                            <Text color={ch.change === 'changed' && !ch.isBumped ? 'yellow' : 'cyan'} wrap="wrap">
+                              📐 {changeText(ch)}
+                            </Text>
+                          </Box>
+                        ))}
+                      {l.nema !== undefined && l.nema.error !== '' && (
+                        <Box paddingLeft={4}>
+                          <Text color="red" wrap="wrap">
+                            语法错误：{l.nema.error}
                           </Text>
                         </Box>
                       )}

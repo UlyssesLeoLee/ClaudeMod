@@ -1,8 +1,11 @@
 // Pure rules of the task overview: the WBS format, how it is read and counted, the
 // 140-character summary, and the prompts. No `$`, no files: everything here is tested directly.
 import type { Mismatch, MismatchKind, Overview, WbsStatus, WbsTask } from '../../types'
+import { nemaTable, parseNema } from '../core/nema'
 
 export const WBS_PATH = 'docs/WBS.md'
+// A WBS kept as a .nema table domain reads the same way.
+export const WBS_NEMA_PATH = 'docs/WBS.nema'
 export const SUMMARY_LIMIT = 140
 export const MAX_ROWS = 200
 const MAX_COMMITS = 60
@@ -47,6 +50,22 @@ export function normHeader(cell: string): string {
     .replace(/％/g, '%')
     .replace(/\s+/g, '')
     .toLowerCase()
+}
+
+/**
+ * A WBS kept in .nema: the first table domain with a 任务 column, as the Markdown table
+ * parseWbs reads; or why the file can't be read.
+ */
+export function wbsFromNema(text: string): { table: string } | { error: string } {
+  const parsed = parseNema(text)
+  if (parsed.error !== '') return { error: `${WBS_NEMA_PATH} 不符合 .nema 语法（${parsed.error}）` }
+  const found = nemaTable(parsed, name => HEADERS.name.includes(normHeader(name)))
+  if (found === undefined) return { error: `${WBS_NEMA_PATH} 里没有带「任务」列的表格领域。` }
+  const cell = (value: string) => value.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ')
+  const row = (cells: string[]) => `| ${cells.map(cell).join(' | ')} |`
+  return {
+    table: [row(found.columns), `|${found.columns.map(() => '---').join('|')}|`, ...found.rows.map(row)].join('\n'),
+  }
 }
 
 /** The cells of one table row: outer pipes optional, `\|` kept inside a cell. */

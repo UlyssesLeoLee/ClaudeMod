@@ -10,7 +10,12 @@ export { fullPath, isAbsolutePath } from '../core/util'
 export const DOC_ROOTS = ['docs', 'doc', '.quality/docs', '.quality/test-design']
 const DOC_FOLDER =
   /設計|设计|design|spec|仕様|规格|規格|テスト|测试|試験|test|要件|需求|requirement|wbs|計画|计划|plan|資料|资料|文档|ドキュメント|(^|[^a-z])docs?([^a-z]|$)/i
-export const DOC_EXTS = ['.xlsx', '.xlsm', '.xls', '.md', '.markdown', '.txt']
+export const DOC_EXTS = ['.xlsx', '.xlsm', '.xls', '.md', '.markdown', '.txt', '.nema']
+
+/** A .nema document: domains several agents edit, tracked by domain as well as by SHA256. */
+export function isNemaPath(path: string): boolean {
+  return /\.nema$/i.test(path)
+}
 export const MAX_DEPTH = 6
 export const MAX_FILES = 2000
 export const MAX_CANDIDATES = 300
@@ -333,9 +338,12 @@ export function withSensed(links: readonly DocLink[], sensed: ReadonlyMap<string
   })
 }
 
-/** Takes every document's current content as its new base. */
+/** Takes every document's current content, and a .nema document's current domains, as its new base. */
 export function accepted(links: readonly DocLink[]): DocLink[] {
-  return links.map(l => (l.now === null ? l : { ...l, base: l.now }))
+  return links.map(l => {
+    const next = l.now === null ? l : { ...l, base: l.now }
+    return next.nema ? { ...next, nema: { ...next.nema, base: next.nema.now } } : next
+  })
 }
 
 /** The store kind a project's links are kept under, by its root, across sessions. */
@@ -376,5 +384,10 @@ export function buildUpdatePrompt(links: readonly DocLink[]): string {
     '2. 只修改上面列出的文档，保留原有格式、版式和样式；Excel 文档用 xlsx 技能编辑。某份文档与这次改动无关时不要修改，并说明原因。',
     '3. 文档里只写最终状态，不写过程说明或修改经过。',
     '4. 不要提交或推送。完成后按文档逐一列出改了哪些地方。',
+    ...(links.some(l => isNemaPath(l.path))
+      ? [
+          '5. .nema 文档由多个 agent 按领域分工编辑：只改与本任务相关的领域，每改一个领域就把它领域头（` \\编号 修订号`）的修订号加 1；其他领域和所有领域编号保持原样。遵守 .nema 语法：领域头一个前导半角空格，字段之间一个半角空格，空格和特殊字符用反斜杠转义，不用 Tab 和全角空格。',
+        ]
+      : []),
   ].join('\n')
 }

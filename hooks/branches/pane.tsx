@@ -1,7 +1,8 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import type { BranchInfo, Busy, Commit, Detail, Snapshot, Worktree, WorktreePlan } from '../../types'
+import type { BranchInfo, Busy, Commit, Detail, NemaFile, Snapshot, Worktree, WorktreePlan } from '../../types'
+import { changeText, domainChanges, domainStates, parseNema } from '../core/nema'
 import {
   BUILT_IN_PROTECTED,
   LOG_COUNT,
@@ -93,11 +94,42 @@ const detail = atom(
 
 const DETAIL_PANE = 'commit-detail'
 
-// Clicking a commit row: its whole message in a pane of its own (a tab beside this one).
+// How many .nema files of one commit the detail reads.
+const NEMA_FILES = 5
+
+// Clicking a commit row: its whole message in a pane of its own (a tab beside this one),
+// then the .nema domains it changed, which git reads only now, on that click.
 async function openDetail($: EngineInterface, branch: string, commit: Commit) {
   await update($, detail, () => ({ branch, commit }))
   // `focus` brings the tab to the front, so the click visibly opens it.
   await $.ui.open({ id: DETAIL_PANE, title: '提交详情', closeOnEscape: true, focus: true })
+  const nema = await nemaChanges($, commit.sha).catch((): NemaFile[] => [])
+  if (nema.length > 0) await update($, detail, d => (d?.commit.sha === commit.sha ? { ...d, nema } : d))
+}
+
+/**
+ * The .nema files a commit changed against its first parent, each with the domains that
+ * moved: which agent's commit changed which domain, and whether it raised the revision.
+ */
+async function nemaChanges($: EngineInterface, sha: string): Promise<NemaFile[]> {
+  const cwd = await $.session.cwd()
+  const listed = await git($, cwd, ['-c', 'core.quotepath=false', 'show', '--name-only', '--format=', '-m', '--first-parent', sha])
+  if (listed.exitCode !== 0) return []
+  const paths = [...new Set(listed.stdout.split('\n').map(p => p.trim()))].filter(p => /\.nema$/i.test(p)).slice(0, NEMA_FILES)
+  const files: NemaFile[] = []
+  for (const path of paths) {
+    // A side that git can't show (a new file's parent, a deleted file's commit) has no domains.
+    const before = await git($, cwd, ['show', `${sha}^:${path}`])
+    const after = await git($, cwd, ['show', `${sha}:${path}`])
+    const parsedBefore = before.exitCode === 0 ? parseNema(before.stdout) : undefined
+    const parsedAfter = after.exitCode === 0 ? parseNema(after.stdout) : undefined
+    files.push({
+      path,
+      changes: domainChanges(parsedBefore ? domainStates(parsedBefore) : [], parsedAfter ? domainStates(parsedAfter) : []),
+      error: parsedAfter?.error ?? '',
+    })
+  }
+  return files
 }
 
 // The field's text between redraws; a query clears it.
@@ -499,6 +531,30 @@ export function registerBranches(on: On) {
                 {'  '}
                 {line}
               </Text>
+            ))}
+          </Box>
+        )}
+        {(d.nema ?? []).length > 0 && (
+          <Box flexDirection="column" marginTop={1}>
+            <Text bold>.nema 领域变化</Text>
+            {(d.nema ?? []).map(f => (
+              <Box flexDirection="column">
+                <Text wrap="wrap">
+                  {'  '}📐 {f.path}
+                </Text>
+                {f.changes.length === 0 && <Text dimColor>{'    '}领域没有变化</Text>}
+                {f.changes.map(ch => (
+                  <Text color={ch.change === 'changed' && !ch.isBumped ? 'yellow' : undefined} wrap="wrap">
+                    {'    '}
+                    {changeText(ch)}
+                  </Text>
+                ))}
+                {f.error !== '' && (
+                  <Text color="red" wrap="wrap">
+                    {'    '}语法错误：{f.error}
+                  </Text>
+                )}
+              </Box>
             ))}
           </Box>
         )}

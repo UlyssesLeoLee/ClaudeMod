@@ -14,8 +14,23 @@ export type Commit = {
   // `<hash> <subject>` of each commit a merge brought in, capped; [] otherwise.
   brought: string[]
 }
-// The commit the detail pane shows, and the branch it was picked from.
-export type Detail = { branch: string; commit: Commit }
+// .nema: a domain's kind, its state as kept for change checks, and how it changed.
+export type NemaMode = 'table' | '5w1h' | 'graph'
+export type NemaDomainState = { id: number; mode: NemaMode; revision: number; fingerprint: string }
+export type NemaChange = {
+  id: number
+  mode: NemaMode
+  change: 'added' | 'removed' | 'changed'
+  // Revision before and after; null where the domain did not exist.
+  from: number | null
+  to: number | null
+  // The revision was raised (always true for an added domain).
+  isBumped: boolean
+}
+// The .nema domains one commit changed in one file.
+export type NemaFile = { path: string; changes: NemaChange[]; error: string }
+// The commit the detail pane shows, the branch it was picked from, and its .nema domain changes.
+export type Detail = { branch: string; commit: Commit; nema?: NemaFile[] }
 export type BranchInfo = {
   name: string
   // The rows shown: capped, so they never stand for a count.
@@ -74,6 +89,8 @@ export type DocLink = {
   base: FileState | null
   now: FileState | null
   isMissing: boolean
+  // A .nema document's domains as linked (or last accepted) and as last read, and its grammar error.
+  nema?: { base: NemaDomainState[]; now: NemaDomainState[]; error: string }
 }
 export type DocResult = {
   at: number
@@ -187,6 +204,10 @@ declare module 'claude-code' {
       ovConfirm: Shaped<boolean>
       // What became of the last create-WBS press.
       ovNote: Shaped<string>
+      // The unfinished tasks past the first 30 are listed.
+      ovShowAll: Shaped<boolean>
+      // Tasks whose full text the person pinned open, by 编号.
+      ovOpenTasks: Shaped<Record<string, boolean>>
     }
   }
 }

@@ -10,6 +10,7 @@ import {
   CHECK_SYSTEM,
   MISMATCH_TEXT,
   SUMMARY_LIMIT,
+  WBS_NEMA_PATH,
   WBS_PATH,
   buildCheckPrompt,
   buildCreatePrompt,
@@ -21,6 +22,7 @@ import {
   parseWbs,
   restoredOverview,
   unfinished,
+  wbsFromNema,
 } from './wbs'
 import type { ProjectState } from './wbs'
 
@@ -39,6 +41,13 @@ const result = atom({ plugin: 'dev-cockpit', key: 'ovResult' } as const, EMPTY, 
 const busy = atom({ plugin: 'dev-cockpit', key: 'ovBusy' } as const, false, { shape: 'ovBusy-1' })
 const confirm = atom({ plugin: 'dev-cockpit', key: 'ovConfirm' } as const, false, { shape: 'ovConfirm-1' })
 const note = atom({ plugin: 'dev-cockpit', key: 'ovNote' } as const, '', { shape: 'ovNote-1' })
+// The unfinished tasks past OPEN_SHOWN are listed; tasks whose full text is pinned open.
+const showAll = atom({ plugin: 'dev-cockpit', key: 'ovShowAll' } as const, false, { shape: 'ovShowAll-1' })
+const openTasks = atom(
+  { plugin: 'dev-cockpit', key: 'ovOpenTasks' } as const,
+  {} as Record<string, boolean>,
+  { shape: 'ovOpenTasks-1' },
+)
 
 // One run at a time: set before the first await.
 let working = false
@@ -68,10 +77,12 @@ async function saveOverview($: EngineInterface, next: Overview) {
   await saveForProject($, OVERVIEW_KIND, kept.root || (await $.session.cwd()), kept)
 }
 
-/** The project's WBS: `docs/WBS.md`, any case. */
+/** The project's WBS: `docs/WBS.md`, else `docs/WBS.nema`, any case. */
 async function findWbs($: EngineInterface, root: string) {
   const entries = await $.fs.list(`${root}/docs`).catch(() => [])
-  const hit = entries.find(e => e.kind === 'file' && /^wbs\.md$/i.test(e.name))
+  const hit =
+    entries.find(e => e.kind === 'file' && /^wbs\.md$/i.test(e.name)) ??
+    entries.find(e => e.kind === 'file' && /^wbs\.nema$/i.test(e.name))
   return hit ? { path: `docs/${hit.name}`, mtimeMs: hit.mtimeMs } : undefined
 }
 
@@ -95,7 +106,10 @@ async function gather($: EngineInterface): Promise<Overview> {
   const base = { ...EMPTY, at, root, wbsPath: found.path, wbsMtime: found.mtimeMs }
   const text: unknown = await $.fs.read(`${root}/${found.path}`).catch((err: unknown) => err)
   if (typeof text !== 'string') return { ...base, error: `读不到 ${found.path}：${String(text)}` }
-  const parsed = parseWbs(text)
+  // A .nema WBS: its task table domain, as the table parseWbs reads.
+  const fromNema = /\.nema$/i.test(found.path) ? wbsFromNema(text) : undefined
+  if (fromNema !== undefined && 'error' in fromNema) return { ...base, error: fromNema.error }
+  const parsed = parseWbs(fromNema?.table ?? text)
   if (!parsed.hasTable) {
     return { ...base, error: `${found.path} 里没找到 WBS 表：表头要有「任务」列，以及「进度%」或「状态」列。` }
   }
@@ -145,6 +159,9 @@ async function summarize($: EngineInterface) {
     }
     await saveOverview($, next)
     await update($, note, () => '')
+    // A fresh count starts folded again.
+    await update($, showAll, () => false)
+    await update($, openTasks, () => ({}))
   } finally {
     working = false
     await update($, busy, () => false)
@@ -196,11 +213,14 @@ export function registerOverview(on: On) {
     const open = unfinished(r.tasks, today)
     const hasWbs = r.wbsPath !== ''
     const names = new Map(r.tasks.map(t => [t.id, t.name]))
+    const isAll = await read($, showAll)
+    const pinned = await read($, openTasks)
+    const listed = isAll ? open : open.slice(0, OPEN_SHOWN)
 
     const status = isBusy
       ? '⏳ 正在读取 WBS 并请 AI 核对…'
       : r.at === 0
-        ? `点「生成概要」：读取 ${WBS_PATH}，统计完成度和未完成任务，并请 AI 对照 Git 核对。`
+        ? `点「生成概要」：读取 ${WBS_PATH}（或 ${WBS_NEMA_PATH}），统计完成度和未完成任务，并请 AI 对照 Git 核对。`
         : `上次统计 ${relTime(r.at, now)} · ${hasWbs ? `${r.wbsPath}（修改于 ${fullTime(r.wbsMtime)}）` : '项目里还没有 WBS'}`
 
     return (
@@ -254,25 +274,69 @@ export function registerOverview(on: On) {
         {hasWbs && open.length > 0 && (
           <Box flexDirection="column" marginTop={1}>
             <Text bold>未完成任务（{open.length}）</Text>
-            {open.slice(0, OPEN_SHOWN).map(t => {
+            {listed.map(t => {
               const late = isOverdue(t, today)
+              const isPinned = pinned[t.id] === true
+              // Hidden until the pointer is over the row; a press of the row keeps it open
+              // (then it is simply shown: a hover may only reveal what is hidden).
+              const full = (
+                <Box
+                  display={isPinned ? 'flex' : 'none'}
+                  {...(isPinned ? {} : { hover: { display: 'flex' as const } })}
+                  flexDirection="column"
+                  borderStyle="round"
+                  borderDimColor
+                  paddingX={1}
+                  marginLeft={2}
+                >
+                  <Text wrap="wrap">
+                    📋 {t.id} {t.name}
+                  </Text>
+                  <Text dimColor wrap="wrap">
+                    负责人 {t.owner || '未分配'} · 预定 {t.start || '—'} → {t.due || '—'} · 实际结束 {t.finished || '—'}
+                  </Text>
+                  <Text dimColor wrap="wrap">
+                    工数 {t.effort === null ? '—' : `${t.effort} 人日`} · 进度 {t.progress}% · {t.status}
+                    {late ? ' · ⚠ 已逾期' : ''}
+                  </Text>
+                </Box>
+              )
               return (
-                <Box>
-                  <Box flexGrow={1} flexShrink={1}>
-                    <Text color={late ? 'red' : undefined} wrap="truncate-end">
-                      {late ? '⚠ 逾期 ' : ''}
-                      {t.id} {t.name}
-                    </Text>
+                <Box key={`ov-task-${t.id}`} flexDirection="column">
+                  <Box>
+                    <Box flexGrow={1} flexShrink={1}>
+                      <Button
+                        key={`ov-task-open-${t.id}`}
+                        plain
+                        onPress={() => update($, openTasks, all => ({ ...all, [t.id]: !all[t.id] }))}
+                      >
+                        <Text color={late ? 'red' : undefined} wrap="truncate-end">
+                          {isPinned ? '▼ ' : ''}
+                          {late ? '⚠ 逾期 ' : ''}
+                          {t.id} {t.name}
+                        </Text>
+                      </Button>
+                    </Box>
+                    <Box flexShrink={0} marginLeft={1}>
+                      <Text color={late ? 'red' : undefined} dimColor={!late}>
+                        {t.owner || '未分配'} · 预定 {t.due || '—'} · {t.progress}% {t.status}
+                      </Text>
+                    </Box>
                   </Box>
-                  <Box flexShrink={0} marginLeft={1}>
-                    <Text color={late ? 'red' : undefined} dimColor={!late}>
-                      {t.owner || '未分配'} · 预定 {t.due || '—'} · {t.progress}% {t.status}
-                    </Text>
-                  </Box>
+                  {full}
                 </Box>
               )
             })}
-            {open.length > OPEN_SHOWN && <Text dimColor>…另有 {open.length - OPEN_SHOWN} 项</Text>}
+            {open.length > OPEN_SHOWN && (
+              <Box>
+                <Button
+                  key="ov-more"
+                  label={isAll ? '▲ 收起' : `▶ 另有 ${open.length - OPEN_SHOWN} 项`}
+                  plain
+                  onPress={() => update($, showAll, v => !v)}
+                />
+              </Box>
+            )}
           </Box>
         )}
 
@@ -282,7 +346,7 @@ export function registerOverview(on: On) {
               需要核对（AI 判断，仅供参考）（{r.mismatches.length}）
             </Text>
             {r.mismatches.map(m => (
-              <Text color="yellow" wrap="truncate-end">
+              <Text color="yellow" wrap="wrap">
                 {m.id} {names.get(m.id) ?? ''}：{MISMATCH_TEXT[m.kind]}
                 {m.note ? `——${m.note}` : ''}
               </Text>

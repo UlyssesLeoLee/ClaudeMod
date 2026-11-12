@@ -2,7 +2,7 @@
 
 Source: `hooks/overview/pane.tsx`
 
-Source-SHA256: `1a4c693c2a74c77151248fbd6e31f24f85cbce912b20cc5ab6932af05a09cce9`
+Source-SHA256: `3b46322fb23c4f30c4fc8b03ad0633b0e83814f13c07938b496b79706d378734`
 
 ## Responsibility
 
@@ -14,7 +14,7 @@ The 任务概要 feature: the `task-overview` pane and `/task-overview`.
 - The overview is kept by project root (`saveForProject('overview', root, …)`) and found from any folder inside the project (`loadNearest`).
 - The WBS is `docs/WBS.md` or `docs/WBS.nema` (any case; `.md` first when both exist); a `.nema` WBS is read through `wbsFromNema`.
 - Unfinished tasks: the first 30 are listed; past them a `▶ 另有 N 项` button opens the rest, and `▲ 收起` folds them back (state `ovShowAll`).
-- Every task shows all of its text: its row is a hover scope whose box (hidden until the pointer is over the row) holds the whole name, wrapped, with 负责人, 预定开始 → 预定结束, 实际结束, 工数, 进度 and 状态; pressing the row keeps that box open, pressing again closes it (state `ovOpenTasks`, by task 编号). Rows of the 需要核对 list wrap instead of being cut.
+- Every task shows all of its text: its row is a hover scope whose box (hidden until the pointer is over the row) holds the whole name, wrapped, with 负责人, 预定开始 → 预定结束, 实际结束, 工数, 进度 and 状态; pressing the row keeps that box open, pressing again closes it (state `ovOpenTasks`, by task 编号); a box kept open is simply shown and carries no hover rule. The box's first line is `📋 <编号> <任务>`. Rows of the 需要核对 list wrap instead of being cut.
 
 ## Dependencies
 

@@ -33,6 +33,8 @@ const WBS = [
 type World = {
   // The WBS file's text, or undefined when docs/ has none; 'unreadable' makes the read fail.
   wbs: string | undefined
+  // The WBS file's name in docs/ (WBS.md unless set).
+  wbsName?: string
   answer: string | 'fail'
   calls: { fs: string[]; process: string[][]; model: string[]; submitted: string[] }
 }
@@ -58,7 +60,7 @@ function engine(on: On, w: World, stored: Record<string, never> = {}) {
   on('ui.toast', () => ({ value: undefined }))
   on('fs.list', (_, e) => {
     w.calls.fs.push(`list ${slash(e.path)}`)
-    const files = w.wbs === undefined ? [] : [{ name: 'WBS.md', kind: 'file' as const }]
+    const files = w.wbs === undefined ? [] : [{ name: w.wbsName ?? 'WBS.md', kind: 'file' as const }]
     const entries = slash(e.path) === `${ROOT}/docs` ? [...files, { name: 'design', kind: 'dir' as const }] : []
     return { value: entries.map(x => ({ ...x, size: 1, mtimeMs: NOW - 3_600_000, isLink: false })) }
   })
@@ -324,4 +326,104 @@ test('the cap counts characters, not UTF-16 units', () => {
   const cut = capSummary(emoji)
   expect([...cut].length).toBe(140)
   expect(capSummary('  短的\n概要  ')).toBe('短的 概要')
+})
+
+// The same tasks as WBS, kept as a .nema table domain after a 5W1H domain.
+const WBS_NEMA = [
+  ' \\?1 1',
+  '张三 设计 2026-11 OA 进度 周会',
+  ' \\2 1',
+  '\\# 编号 任务 负责人 预定开始 预定结束 实际结束 工数(人日) 进度% 状态',
+  '1 设计 张三 \\e \\e \\e 10 50 进行中',
+  '1.1 要件定义书 张三 2026-11-01 2026-11-03 2026-11-03 2 100 已完成',
+  '1.2 机能设计书 李四 2026-11-04 2026-11-10 \\_ 4 50 进行中',
+  '1.10 审批流程设计 王五 2026-11-20 2026-11-25 \\_ 2 0 未开始',
+  '2 旧方案 \\e \\e \\e \\e 3 0 已取消',
+  '',
+].join('\n')
+
+test('a WBS.nema table domain is read like WBS.md', async ($, on) => {
+  const w = world({ wbs: WBS_NEMA, wbsName: 'WBS.nema' })
+  engine(on, w)
+  const ui = await $.ui.mount(pane('desktop'))
+  await ui.press({ key: 'ov-run' })
+  const tasks = parseWbs(WBS).tasks
+  expect(await has(ui, `完成度 ${completion(tasks).percent}%`)).toBe(true)
+  expect(await has(ui, `未完成任务（${unfinished(tasks, TODAY).length}）`)).toBe(true)
+  expect(await has(ui, 'docs/WBS.nema（修改于')).toBe(true)
+  await ui.unmount()
+})
+
+test('a WBS.nema without a task table, or with a grammar error, says so', async ($, on) => {
+  const w = world({ wbs: ' \\1 1\nA B\n', wbsName: 'WBS.nema' })
+  engine(on, w)
+  const ui = await $.ui.mount(pane('desktop'))
+  await ui.press({ key: 'ov-run' })
+  expect(await has(ui, 'docs/WBS.nema 里没有带「任务」列的表格领域。')).toBe(true)
+  w.wbs = ' \\1 1\n\\# 编号 任务\n1  设计\n'
+  await ui.press({ key: 'ov-run' })
+  expect(await has(ui, 'docs/WBS.nema 不符合 .nema 语法（第 3 行：字段之间只能有一个空格）')).toBe(true)
+  await ui.unmount()
+})
+
+type Keyed = { key: string | undefined; props: Record<string, unknown>; text?: string }
+type Pressing = {
+  findAll: (q: { type: string }) => Promise<Keyed[]>
+  press: (t: { key: string }) => Promise<unknown>
+}
+const taskRows = async (ui: Pressing) =>
+  (await ui.findAll({ type: 'Button' })).filter(b => b.key?.startsWith('ov-task-open-')).length
+
+test('the tasks past the first 30 open on a press and fold back', async ($, on) => {
+  const rows = Array.from({ length: 35 }, (_, i) => `| ${i + 1} | 任务${i + 1} | 张三 | 2026-11-01 | 2026-12-31 | | 1 | 0 | 未开始 |`)
+  const w = world({ wbs: [WBS_HEADER_ROW, '|---|---|---|---|---|---|---|---|---|', ...rows].join('\n') })
+  engine(on, w)
+  const ui = (await $.ui.mount(pane('desktop'))) as unknown as Pressing & { unmount: () => Promise<void> }
+  await ui.press({ key: 'ov-run' })
+  const more = async () => (await ui.findAll({ type: 'Button' })).find(b => b.key === 'ov-more')?.props.label
+  expect(await taskRows(ui)).toBe(30)
+  expect(await more()).toBe('▶ 另有 5 项')
+  await ui.press({ key: 'ov-more' })
+  expect(await taskRows(ui)).toBe(35)
+  expect(await more()).toBe('▲ 收起')
+  await ui.press({ key: 'ov-more' })
+  expect(await taskRows(ui)).toBe(30)
+  // A new count starts folded.
+  await ui.press({ key: 'ov-more' })
+  await ui.press({ key: 'ov-run' })
+  expect(await taskRows(ui)).toBe(30)
+  await ui.unmount()
+})
+
+const LONG = '审批流程设计包括一级审批二级审批代理审批与撤回规则并覆盖所有异常路径的详细说明以及与考勤画面的联动'
+
+test('a task shows all its text on hover and on a press', async ($, on) => {
+  const row = `| 1 | ${LONG} | 张三 | 2026-11-01 | 2026-12-31 | | 4 | 20 | 进行中 |`
+  const w = world({ wbs: [WBS_HEADER_ROW, '|---|---|---|---|---|---|---|---|---|', row].join('\n') })
+  engine(on, w)
+  const ui = (await $.ui.mount(pane('desktop'))) as unknown as Pressing & {
+    find: (q: { type: string; key: string }) => Promise<{ children?: unknown } | undefined>
+    unmount: () => Promise<void>
+  }
+  await ui.press({ key: 'ov-run' })
+  const hiddenBoxes = async () => (await ui.findAll({ type: 'Box' })).filter(b => b.props.display === 'none')
+
+  // Until the pointer is over the row: hidden, holding every word and field, wrapped.
+  const hidden = await hiddenBoxes()
+  expect(hidden).toHaveLength(1)
+  expect(hidden[0]?.text).toContain(`1 ${LONG}`)
+  expect(hidden[0]?.text).toContain('负责人 张三 · 预定 2026-11-01 → 2026-12-31 · 实际结束 —')
+  expect(hidden[0]?.text).toContain('工数 4 人日 · 进度 20% · 进行中')
+  type Drawn = { props?: { display?: string }; hover?: unknown }
+  const scope = await ui.find({ type: 'Box', key: 'ov-task-1' })
+  const reveal = (scope?.children as Drawn[] | undefined)?.find(k => k.props?.display === 'none')
+  expect(reveal?.hover).toEqual({ display: 'flex' })
+
+  // A press keeps it open; another closes it.
+  await ui.press({ key: 'ov-task-open-1' })
+  expect(await hiddenBoxes()).toHaveLength(0)
+  expect((await ui.findAll({ type: 'Text' })).some(t => t.props.wrap === 'wrap' && (t.text ?? '').includes(LONG))).toBe(true)
+  await ui.press({ key: 'ov-task-open-1' })
+  expect(await hiddenBoxes()).toHaveLength(1)
+  await ui.unmount()
 })

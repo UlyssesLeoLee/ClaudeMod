@@ -26,6 +26,8 @@ type Docs = {
   cwd?: string
   // What the mod's reveal script prints (front / opened / missing); unset: it says nothing useful.
   reveal?: string
+  // File text by absolute path, where a test needs more than the default.
+  texts?: Record<string, string>
   calls: { fs: string[]; process: string[][]; model: string[]; submitted: string[]; toasts: string[]; filled: string[] }
 }
 
@@ -116,7 +118,7 @@ function world(on: On, d: Docs, stored: Record<string, never> = {}) {
   })
   on('fs.read', (_, e) => {
     d.calls.fs.push(`read ${e.path}`)
-    return { value: '# 审批测试设计\n二级审批' }
+    return { value: d.texts?.[slash(e.path)] ?? '# 审批测试设计\n二级审批' }
   })
   on('process.run', (_, e) => {
     d.calls.process.push([...e.argv])
@@ -833,4 +835,50 @@ test('a folder beside the project is scanned in the first pass, before anyone ad
   expect(await shows(ui, /IT 测试设计（1）/)).toBe(true)
   expect((await ui.find({ type: 'Button', key: 'doc-folder-suggest-C:/PROJ_V2_DOCS/docs' }))?.props.label).toBe('➕ 固定加入')
   await ui.unmount()
+})
+
+const NEMA_DOC = 'docs/設計/基本設計書.nema'
+const nemaText = (...lines: string[]) => `${lines.join('\n')}\n`
+
+function withNema(d: Docs, text: string) {
+  d.tree[`${ROOT}/docs/設計`] = [...(d.tree[`${ROOT}/docs/設計`] ?? []), file('基本設計書.nema')]
+  d.texts = { ...d.texts, [`${ROOT}/${NEMA_DOC}`]: text }
+  return d
+}
+
+test('a .nema document is linked with its domains and its changes are told by domain', async ($, on) => {
+  const d = withNema(docs({ model: { paths: [NEMA_DOC] } }), nemaText(' \\1 1', '\\# 画面 状态', '一覧 完成', ' \\2 3', 'A B'))
+  world(on, d)
+  const ui = await linked($)
+  // The model reads the domains, not the raw lines.
+  expect(d.calls.model[0]).toContain('内容: \\1 修订1 表格 列：画面 状态 · 1 条 · 首条：一覧 完成 \\2 修订3 表格')
+  expect(await shows(ui, /基本設計書\.nema/)).toBe(true)
+  expect(await shows(ui, /📐/)).toBe(false)
+
+  // Another agent edits domain 1 without raising its revision, and adds domain 3.
+  d.texts = { [`${ROOT}/${NEMA_DOC}`]: nemaText(' \\1 1', '\\# 画面 状态', '一覧 修正中', ' \\2 3', 'A B', ' \\3 1', 'X') }
+  d.files[NEMA_DOC] = SHA_B
+  await ui.press({ key: 'doc-check' })
+  expect(await shows(ui, /📐 \\1 内容已改，修订号未增加（仍为 1）/)).toBe(true)
+  expect(await shows(ui, /📐 \\3 新增（修订 1）/)).toBe(true)
+  expect(await shows(ui, /📐 \\2/)).toBe(false)
+
+  await ui.press({ key: 'doc-accept' })
+  expect(await shows(ui, /📐/)).toBe(false)
+  await ui.unmount()
+})
+
+test('a .nema grammar error is shown with its line', async ($, on) => {
+  const d = withNema(docs({ model: { paths: [NEMA_DOC] } }), nemaText(' \\1 1', 'A  B'))
+  world(on, d)
+  const ui = await linked($)
+  expect(await shows(ui, /语法错误：第 2 行：字段之间只能有一个空格/)).toBe(true)
+  await ui.unmount()
+})
+
+test('the update prompt states the .nema rule only when a .nema document is linked', () => {
+  const withRule = buildUpdatePrompt([newLink('basic', NEMA_DOC, ''), newLink('req', REQ, '')])
+  expect(withRule).toContain('5. .nema 文档由多个 agent 按领域分工编辑')
+  expect(withRule).toContain('修订号加 1')
+  expect(buildUpdatePrompt([newLink('req', REQ, '')])).not.toContain('.nema')
 })

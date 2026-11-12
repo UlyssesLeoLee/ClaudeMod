@@ -2,7 +2,7 @@
 
 Source: `hooks/doclinks/pane.tsx`
 
-Source-SHA256: `009712899745920853f5256c8a2bde4adc24bda0daeceae2d3eafd733ad808ea`
+Source-SHA256: `f00f7c3472c8c59f1b74d3e2ab08f446716262406dec18da448d7ab3326235dc`
 
 ## Test Strategy
 
