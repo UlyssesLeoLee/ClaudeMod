@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "source": "hooks/doclinks/logic.ts",
-  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "baseline_source_sha256": "0827e6f5b0cc5631483f164eeded6188aa054eb135520048d7fb538e4d19e0e8",
   "prepared_branch": "main",
   "technical_design": ".quality/docs/hooks/doclinks/logic.ts.md",
   "test_design": ".quality/test-design/hooks/doclinks/logic.ts.test.md",
-  "prepared_technical_design_sha256": "e652328df29b830712340f629c75db01b6884db39791407bbbfc774fcd355f99",
-  "prepared_test_design_sha256": "914088eaedb3443e0724e00e6dc9d20e1eecc3f0826844cec7f8162934c4a665",
+  "prepared_technical_design_sha256": "f1d24163642b94eead80c6b394861534a0690cc1c3fb1e4f0fd7b1d9abc668d5",
+  "prepared_test_design_sha256": "96a20d8d60d9c483cd94f5d3aed4ee0f4b9de236594631ff38e7b759f764b11b",
   "prepared_related_design_sha256": {}
 }

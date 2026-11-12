@@ -14,6 +14,7 @@ Pure rules of the overview feature:
 - Model check: `CHECK_SYSTEM`, `buildCheckPrompt(today, tasks, state)`, `parseCheck(text, tasks)` (mismatches naming a WBS task of a known kind only), `MISMATCH_TEXT`.
 - Storage: `restoredOverview(value)`.
 - Creation: `CREATE_HEADER`, `buildCreatePrompt()` (fixed template naming the columns and an example row).
+- `.nema` WBS: `WBS_NEMA_PATH` (`docs/WBS.nema`); `wbsFromNema(text)` takes the first table domain with a 任务 column (`nemaTable`) and turns it into the table `parseWbs` reads, so a WBS kept in `.nema` counts the same way; a grammar error, or no such domain, is reported as the reason the WBS cannot be read.
 
 ## Dependencies
 
@@ -22,7 +23,10 @@ Types from `../../types`. No engine calls.
 ## Public Contract
 
 Pure functions; `parseWbs` never throws and reports problems in `warnings`; `hasTable` false when no header with 任务 and 进度% or 状态 exists.
+- `wbsFromNema(text): { table: string } | { error: string }`.
 
 ## Change Notes
 
 - Lives in `hooks/overview/` with the feature it serves.
+- A WBS may be kept as a `.nema` table domain.
+

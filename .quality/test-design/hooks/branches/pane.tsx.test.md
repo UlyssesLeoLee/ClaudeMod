@@ -21,6 +21,7 @@ Integration tests in tests/branches.test.tsx with the `claude-code/testing` kit:
 | TC-007 | Dirty worktree with unmerged commits and ignored files | Details listed before a forced delete | tests/branches.test.tsx#unsaved changes and unmerged commits are listed before a forced delete; tests/branches.test.tsx#files git ignores are listed before a delete takes them |
 | TC-008 | Row click / 📄 全文 | `ui.open` `commit-detail` with `focus: true`; full message shown | tests/branches.test.tsx#clicking a commit row opens its whole message in a pane of its own; tests/branches.test.tsx#every row has a visible 全文 button, and the hover preview a real one |
 | TC-009 | 🛡 保护 on a queried branch | Joins the default list; kept across sessions | tests/branches.test.tsx#a queried branch can be protected, and then joins the default list; tests/branches.test.tsx#the protected list is kept across sessions |
+| TC-010 | Detail of a commit that changed one `.nema` file: one domain revised, one changed without revision, one added | The detail lists the file and the three domain changes; no git runs before the row is clicked | tests/branches.test.tsx#the detail of a commit that changed a .nema file lists the domains it changed |
 
 ## Boundary & Failure Cases
 

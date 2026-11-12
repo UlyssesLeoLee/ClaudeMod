@@ -12,6 +12,7 @@ The 任务概要 feature: the `task-overview` pane and `/task-overview`.
 - Without a WBS: 📝 新建 WBS asks first, looks again, and only then submits the fixed create prompt as the person's words.
 - Nothing is read, run or asked before 生成概要 is pressed.
 - The overview is kept by project root (`saveForProject('overview', root, …)`) and found from any folder inside the project (`loadNearest`).
+- The WBS is `docs/WBS.md` or `docs/WBS.nema` (any case; `.md` first when both exist); a `.nema` WBS is read through `wbsFromNema`.
 
 ## Dependencies
 
@@ -28,3 +29,5 @@ The 任务概要 feature: the `task-overview` pane and `/task-overview`.
 ## Change Notes
 
 - The feature lives in `hooks/overview/`. Overviews are kept under the project root and found from subfolders.
+- `docs/WBS.nema` is read as a WBS.
+

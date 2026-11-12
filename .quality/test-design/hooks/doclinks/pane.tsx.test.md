@@ -23,6 +23,8 @@ Integration tests in tests/doc-links.test.tsx, tests/review-sync.test.tsx and te
 | TC-009 | 📝 更新 → 确认 | Fixed prompt with ticked paths only, as the person's words | tests/doc-links.test.tsx#更新 asks first, then hands Claude only the ticked paths, never model text |
 | TC-010 | Review, then code edit, turn ends | Docs linked and update handed to Claude; unchanged docs get 手动更新 | tests/review-sync.test.tsx#a review, then code changed: the turn’s end links docs and hands Claude their update; tests/review-sync.test.tsx#after the update turn, a doc whose SHA256 did not move gets the 手动更新 button |
 | TC-011 | `/doc-links add`, `remove`, `list`; ➕ 添加文档目录 | Folder kept for the project; prompt box filled | tests/doc-links.test.tsx#an extra folder must be absolute, exist, lie outside the project, and be added once; tests/doc-links.test.tsx#➕ 添加文档目录 puts the command in the prompt box |
+| TC-012 | A `.nema` document linked, then one domain edited without raising its revision and another domain added | Model reads its summary; the row lists `内容已改，修订号未增加` and `新增`; ✔ 接受修改 clears them | tests/doc-links.test.tsx#a .nema document is linked with its domains and its changes are told by domain |
+| TC-013 | A linked `.nema` document whose text breaks the grammar | Red `语法错误` with its line | tests/doc-links.test.tsx#a .nema grammar error is shown with its line |
 
 ## Boundary & Failure Cases
 

@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "source": "hooks/overview/wbs.ts",
-  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "baseline_source_sha256": "e78a570b8a254add009dd4364e789a1cfc41726c0e9147f81b915a1d8b1c2cb7",
   "prepared_branch": "main",
   "technical_design": ".quality/docs/hooks/overview/wbs.ts.md",
   "test_design": ".quality/test-design/hooks/overview/wbs.ts.test.md",
-  "prepared_technical_design_sha256": "18f1e4148138af9ffa6839d1f124ba334b47bbc3977c7d23e3b7eccc561b132d",
-  "prepared_test_design_sha256": "af4daac7f4dae7f9162f59a1c41f4810278db977f29f3d1ef354627a7e0da3b7",
+  "prepared_technical_design_sha256": "961ee962e0f45c1b4f75d607bb66b45555ed12a978c1540bbc630baf424af1f3",
+  "prepared_test_design_sha256": "c151d0a281965cfc057cf9a3c424cfc23b01998f7f9164f3648a84e3f0f61435",
   "prepared_related_design_sha256": {}
 }

@@ -15,6 +15,7 @@ The 关联文档 feature: the `doc-links` pane, `/doc-links`, and the update aft
 - After a review (`/code-review`, a review skill or agent, or review words in a prompt) followed by code edits, the end of that turn links and updates the documents automatically.
 - Extra folders: `/doc-links add|remove|list` or ➕ 添加文档目录 (fills the prompt box with `/doc-links add `).
 - Results are kept by project root (`saveForProject('docLinks', root, …)`) and found from any folder inside the project (`loadNearest`).
+- `.nema` documents: the model reads their domain summary (`nemaSummary`) instead of raw text. At 智能关联 each linked `.nema` document is read (`$.fs.read`) and parsed (`parseNema`); its domains (`domainStates`) are kept as the base beside its SHA256. 🔄 检查状态 reads them again as now. The row lists the domains changed since the base (`domainChanges`, `changeText`) — a domain whose content changed while its revision stayed is shown in yellow — and a grammar error with its line in red. ✔ 接受修改 takes the current domains as the new base.
 
 ## Dependencies
 
@@ -27,7 +28,10 @@ The 关联文档 feature: the `doc-links` pane, `/doc-links`, and the update aft
 - State keys under `dev-cockpit`: `docResult`, `docBusy`, `docSkip`, `docConfirm`, `docSentAt`, `docKindOpen`, `docFolders`, `syncReview`, `syncEdited`, `syncPhase`, `syncBefore`, `syncUnchanged`, `syncNote`.
 - Store keys: `docLinks:<project root>`, `docFolders:<project root>` (and `docFolders:<session folder>` when it differs).
 - Hooks on `prompt.submit`, `turn.start`, `tool.call` never block or alter the event: their own failures are swallowed.
+- `DocLink.nema` (optional): `{ base: NemaDomainState[]; now: NemaDomainState[]; error: string }` for a `.nema` document.
 
 ## Change Notes
 
 - The feature lives in `hooks/doclinks/`. Links are kept under the project root and found from subfolders, so a session whose shell moved into `docs/…` shows the project's links.
+- `.nema` documents are tracked by domain as well as by SHA256.
+

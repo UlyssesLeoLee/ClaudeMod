@@ -21,6 +21,8 @@ Unit tests of the pure rules in tests/doc-links.test.tsx, and the pane tests tha
 | TC-007 | `coverKinds` with links lacking ut/it and candidates of both | One ut and one it added with the cover reason | tests/doc-links.test.tsx#every kind found gets a link: what the model left out is filled in by kind |
 | TC-008 | `buildUpdatePrompt` with a path holding `\u0007` | Control character replaced by a space | tests/doc-links.test.tsx#the update prompt strips control characters from paths |
 | TC-009 | `personText` on engine-wrapped text, slash command, skill body | Typed words only | tests/doc-links.test.tsx#what counts as the person’s words in the record; tests/doc-links.test.tsx#a person’s words survive the wrapping the engine adds around them |
+| TC-010 | A `.nema` file among the documents | It is a candidate, classified by its name | tests/doc-links.test.tsx#a .nema document is linked with its domains and its changes are told by domain |
+| TC-011 | Update prompt with and without a linked `.nema` document | The `.nema` rule only when one is linked | tests/doc-links.test.tsx#the update prompt states the .nema rule only when a .nema document is linked |
 
 ## Boundary & Failure Cases
 

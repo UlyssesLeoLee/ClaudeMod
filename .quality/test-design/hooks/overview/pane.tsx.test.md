@@ -20,6 +20,7 @@ Integration tests in tests/overview.test.tsx and tests/store.test.tsx: fake `doc
 | TC-006 | No WBS; 新建 → 确认 | Looks again; submits only the fixed prompt | tests/overview.test.tsx#without a WBS, 新建 asks first, looks again, and sends only the fixed prompt |
 | TC-007 | Stored overview, new session | Shown without running anything | tests/overview.test.tsx#an overview comes back in a later session without running anything |
 | TC-008 | Stored under the project root, session folder `C:/proj/src` | Shown | tests/store.test.tsx#an overview saved for the project is found from a subfolder |
+| TC-009 | Only `docs/WBS.nema` exists | Overview counted from its task table domain | tests/overview.test.tsx#a WBS.nema table domain is read like WBS.md |
 
 ## Boundary & Failure Cases
 

@@ -15,6 +15,7 @@ Pure rules of the doc feature:
 - Status: `docStatus`, `STATUS_TEXT`, `withSensed`, `accepted`.
 - Storage: `DOC_KIND = 'docLinks'`, `restored(value)`.
 - The update prompt: `UPDATE_HEADER`, `buildUpdatePrompt(links)` (template and paths only).
+- `.nema`: `DOC_EXTS` includes `.nema`, so `.nema` files are documents like any other and are classified by their names; `isNemaPath(path)`. `buildUpdatePrompt` adds, only when a linked document is `.nema`, the fixed rule: edit only the domains the task concerns, raise the revision in the header of each domain edited, keep every other domain and every domain ID as it is, and follow the `.nema` grammar.
 
 ## Dependencies
 
@@ -23,8 +24,11 @@ Pure rules of the doc feature:
 ## Public Contract
 
 All functions are pure. `restored` accepts only a value of the current `DocResult` shape. `buildUpdatePrompt` strips control characters from paths.
+- `isNemaPath(path)` — a path ending in `.nema`, any case.
 
 ## Change Notes
 
 - `fullPath` and `isAbsolutePath` come from `hooks/core/util.ts` and are re-exported here for the doc feature.
 - Stored links are read through `hooks/core/store.ts` under the project root; `storeKey(path)` is `projectKey('docLinks', path)`.
+- `.nema` documents are scanned, linked and updated with their domain rule.
+
