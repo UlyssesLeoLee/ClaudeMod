@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "source": "hooks/doclinks/review.ts",
+  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "prepared_branch": "main",
+  "technical_design": ".quality/docs/hooks/doclinks/review.ts.md",
+  "test_design": ".quality/test-design/hooks/doclinks/review.ts.test.md",
+  "prepared_technical_design_sha256": "6ba47c87d1e30208ea86b962fc280cedec6ae583751e42a5dc5decc14ad006d1",
+  "prepared_test_design_sha256": "b49542bfc7cf569539abfe39776ac9b1d167108a532f997e6fb92f728bc3c0f8",
+  "prepared_related_design_sha256": {}
+}

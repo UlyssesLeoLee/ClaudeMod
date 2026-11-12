@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "source": "hooks/core/scripts/xlsx_text.py",
+  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "prepared_branch": "main",
+  "technical_design": ".quality/docs/hooks/core/scripts/xlsx_text.py.md",
+  "test_design": ".quality/test-design/hooks/core/scripts/xlsx_text.py.test.md",
+  "prepared_technical_design_sha256": "932722480aa77ca3b30eed184d145888bf567bcd921ab4a8cd189dbc3dd7c9c2",
+  "prepared_test_design_sha256": "dae83acf1e61f2a2cb513b058abd6b80962d87083b3e1fdda4a2ab70710a6a2e",
+  "prepared_related_design_sha256": {}
+}

@@ -1,0 +1,35 @@
+# Test Design: `hooks/branches/pane.tsx`
+
+Source: `hooks/branches/pane.tsx`
+
+Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+
+## Test Strategy
+
+Integration tests in tests/branches.test.tsx with the `claude-code/testing` kit: a fake git (`process.run`) answering `rev-parse`, `log`, `worktree list --porcelain`, `status`, `revert`, `push` per argv; `mock.clock` at a fixed time; `mock.store` for the protected list. Assertions on pane text, buttons, `ui.open` calls and recorded git argv.
+
+## Test Cases
+
+| Case ID | Input / Setup | Expected Outcome | Test Location |
+| --- | --- | --- | --- |
+| TC-001 | Session start, pane mounted | No `process.run` | tests/branches.test.tsx "no git runs until 加载Git is pressed" |
+| TC-002 | 加载Git, then field `release/1` + 查询分支 | Defaults queried, then `release/1` | tests/branches.test.tsx "加载Git queries the defaults, then what the field holds" |
+| TC-003 | `/branch-status master develop` | List set and queried | tests/branches.test.tsx "/branch-status <names> sets the list and queries it, for surfaces without a field" |
+| TC-004 | AI commits 2 days and 10 days old | Band counts 1; rows show both, 🚨 on the recent one only | tests/branches.test.tsx "outer alarm counts AI of the last 5 days; inner rows show every AI commit"; "🚨 marks exactly the rows the alarm counts: AI commits of the 5-day window" |
+| TC-005 | Own AI commit vs another person's | ↩ 撤销 on own only; confirm pushes `revert/<hash>` from a throwaway worktree | tests/branches.test.tsx "撤销 is offered on one’s own AI commits only"; "撤销 asks first, then pushes revert/<hash> from a throwaway worktree" |
+| TC-006 | Three worktrees, session in the second | All listed, second highlighted; 🗑 删除 on others, never this or the main one | tests/branches.test.tsx "every worktree is listed under the branches, this one highlighted"; "删除 is offered on other worktrees only, never this one or the main one" |
+| TC-007 | Dirty worktree with unmerged commits and ignored files | Details listed before a forced delete | tests/branches.test.tsx "unsaved changes and unmerged commits are listed before a forced delete"; "files git ignores are listed before a delete takes them" |
+| TC-008 | Row click / 📄 全文 | `ui.open` `commit-detail` with `focus: true`; full message shown | tests/branches.test.tsx "clicking a commit row opens its whole message in a pane of its own"; "every row has a visible 全文 button, and the hover preview a real one" |
+| TC-009 | 🛡 保护 on a queried branch | Joins the default list; kept across sessions | tests/branches.test.tsx "a queried branch can be protected, and then joins the default list"; "the protected list is kept across sessions" |
+
+## Boundary & Failure Cases
+
+- Not a repository / failed fetch: said plainly ("not a repository, and a failed fetch, are said plainly").
+- A query while one runs: `/branch-status` says it did not run ("/branch-status during a query says it did not run, instead of claiming it did").
+- A read that fails stops a delete ("a read that fails stops the delete instead of calling it safe").
+- More than 40 merges / 50 older AI rows: capped while the alarm counts all ("one walk judges at most 40 merges …"; "older AI rows are capped at 50 …").
+- A leftover revert worktree is cleared first ("a revert worktree left by a run cut short is cleared before the next revert").
+
+## Regression Scope
+
+The band's alarm (hooks/main.tsx), worktree path matching (core/util), git environment (core/files).

@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "source": "hooks/main.tsx",
+  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "prepared_branch": "main",
+  "technical_design": ".quality/docs/hooks/main.tsx.md",
+  "test_design": ".quality/test-design/hooks/main.tsx.test.md",
+  "prepared_technical_design_sha256": "8a8d6e0aa314fca7f4444547632dac7ce127cb0bb88d7ee1148ba8dcfe4ea4cf",
+  "prepared_test_design_sha256": "3746957552a804217970d2922b3d223f3553fa6627ac13714f7d3f8cb7378fb7",
+  "prepared_related_design_sha256": {}
+}

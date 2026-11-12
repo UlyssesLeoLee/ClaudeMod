@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "source": "hooks/doclinks/logic.ts",
+  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "prepared_branch": "main",
+  "technical_design": ".quality/docs/hooks/doclinks/logic.ts.md",
+  "test_design": ".quality/test-design/hooks/doclinks/logic.ts.test.md",
+  "prepared_technical_design_sha256": "e652328df29b830712340f629c75db01b6884db39791407bbbfc774fcd355f99",
+  "prepared_test_design_sha256": "914088eaedb3443e0724e00e6dc9d20e1eecc3f0826844cec7f8162934c4a665",
+  "prepared_related_design_sha256": {}
+}

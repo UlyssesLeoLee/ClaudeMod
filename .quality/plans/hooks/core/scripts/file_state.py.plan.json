@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "source": "hooks/core/scripts/file_state.py",
+  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "prepared_branch": "main",
+  "technical_design": ".quality/docs/hooks/core/scripts/file_state.py.md",
+  "test_design": ".quality/test-design/hooks/core/scripts/file_state.py.test.md",
+  "prepared_technical_design_sha256": "888f25109c6b37dbd0a8a4225e44374d5bf23ba83413b2d0a9e7702511b15bab",
+  "prepared_test_design_sha256": "56a99b82a921dde56ffbf8f5c21f52dbb3af5632967fc9feb084d826a9b8fd58",
+  "prepared_related_design_sha256": {}
+}

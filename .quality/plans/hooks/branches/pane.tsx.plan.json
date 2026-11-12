@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "source": "hooks/branches/pane.tsx",
+  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "prepared_branch": "main",
+  "technical_design": ".quality/docs/hooks/branches/pane.tsx.md",
+  "test_design": ".quality/test-design/hooks/branches/pane.tsx.test.md",
+  "prepared_technical_design_sha256": "f4a3e8dd2f49bb769a87c1a2d6ec7513f55b8fe1d112a0c23d18aded49ecd343",
+  "prepared_test_design_sha256": "1e93f0eec7517e19bd33649a8942fb819a920cd7b6a7bfbeffb0e987283769f0",
+  "prepared_related_design_sha256": {}
+}

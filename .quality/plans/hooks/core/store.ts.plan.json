@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "source": "hooks/core/store.ts",
+  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "prepared_branch": "main",
+  "technical_design": ".quality/docs/hooks/core/store.ts.md",
+  "test_design": ".quality/test-design/hooks/core/store.ts.test.md",
+  "prepared_technical_design_sha256": "49581ecf8dd0aa5b27c42a41d930382cbf9bd16c7c47ee84f7c9c57ce91fdca5",
+  "prepared_test_design_sha256": "3464953f1ec40aba089e57a52a1c08b12f45b6d9a76bb634859e02ab44f10f4e",
+  "prepared_related_design_sha256": {}
+}
