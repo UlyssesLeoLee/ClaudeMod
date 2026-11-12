@@ -21,11 +21,14 @@ Integration tests in tests/overview.test.tsx and tests/store.test.tsx: fake `doc
 | TC-007 | Stored overview, new session | Shown without running anything | tests/overview.test.tsx#an overview comes back in a later session without running anything |
 | TC-008 | Stored under the project root, session folder `C:/proj/src` | Shown | tests/store.test.tsx#an overview saved for the project is found from a subfolder |
 | TC-009 | Only `docs/WBS.nema` exists | Overview counted from its task table domain | tests/overview.test.tsx#a WBS.nema table domain is read like WBS.md |
+| TC-010 | 35 unfinished tasks | 30 listed with `▶ 另有 5 项`; a press lists all 35 with `▲ 收起`; a second press lists 30 again | tests/overview.test.tsx#the tasks past the first 30 open on a press and fold back |
+| TC-011 | A task whose name is longer than the row | Its hover box holds the whole name and every field, wrapped; a press of the row keeps the box open, another press closes it | tests/overview.test.tsx#a task shows all its text on hover and on a press |
 
 ## Boundary & Failure Cases
 
 - A failing run keeps the last good overview and says why (tests/overview.test.tsx "a run that fails keeps the last good overview and says why").
 - WBS without a 任务 column: error names what the table needs.
+- A new 生成概要 folds the list and every opened task again (TC-010 file).
 
 ## Regression Scope
 

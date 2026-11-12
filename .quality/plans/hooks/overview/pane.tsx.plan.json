@@ -5,7 +5,7 @@
   "prepared_branch": "main",
   "technical_design": ".quality/docs/hooks/overview/pane.tsx.md",
   "test_design": ".quality/test-design/hooks/overview/pane.tsx.test.md",
-  "prepared_technical_design_sha256": "dffd7ba28f4e92587111f8c453119c6618af8f30b69366c7bb580266be68c058",
-  "prepared_test_design_sha256": "8dbc105a83426cc3229a71313b4e51f84a6429e470841b446e9f7a03aef5d648",
+  "prepared_technical_design_sha256": "73806cd1fc1b2f78c2fda512e603dec2cd748f97cbd83551b0e4d112b2c873ef",
+  "prepared_test_design_sha256": "5817ebedbeb4b67b4c6fdbb515a6d57e943e026797bcdf99214fa9db50b90af2",
   "prepared_related_design_sha256": {}
 }

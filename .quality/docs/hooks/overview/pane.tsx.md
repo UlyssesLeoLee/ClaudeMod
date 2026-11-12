@@ -13,6 +13,8 @@ The 任务概要 feature: the `task-overview` pane and `/task-overview`.
 - Nothing is read, run or asked before 生成概要 is pressed.
 - The overview is kept by project root (`saveForProject('overview', root, …)`) and found from any folder inside the project (`loadNearest`).
 - The WBS is `docs/WBS.md` or `docs/WBS.nema` (any case; `.md` first when both exist); a `.nema` WBS is read through `wbsFromNema`.
+- Unfinished tasks: the first 30 are listed; past them a `▶ 另有 N 项` button opens the rest, and `▲ 收起` folds them back (state `ovShowAll`).
+- Every task shows all of its text: its row is a hover scope whose box (hidden until the pointer is over the row) holds the whole name, wrapped, with 负责人, 预定开始 → 预定结束, 实际结束, 工数, 进度 and 状态; pressing the row keeps that box open, pressing again closes it (state `ovOpenTasks`, by task 编号). Rows of the 需要核对 list wrap instead of being cut.
 
 ## Dependencies
 
@@ -25,9 +27,11 @@ The 任务概要 feature: the `task-overview` pane and `/task-overview`.
 - State keys under `dev-cockpit`: `ovResult`, `ovBusy`, `ovConfirm`, `ovNote`.
 - Store key `overview:<project root>`.
 - A failed run keeps the last good overview and shows why.
+- State keys `ovShowAll` (boolean) and `ovOpenTasks` (task 编号 → open), both reset by a new 生成概要.
 
 ## Change Notes
 
 - The feature lives in `hooks/overview/`. Overviews are kept under the project root and found from subfolders.
 - `docs/WBS.nema` is read as a WBS.
+- Long task lists and long task names are readable in full.
 
