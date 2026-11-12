@@ -1,0 +1,2 @@
+# Design-first plans are compared byte for byte with what is committed.
+.quality/plans/** -text
