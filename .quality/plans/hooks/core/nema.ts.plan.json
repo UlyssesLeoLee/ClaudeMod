@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "source": "hooks/core/nema.ts",
+  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "prepared_branch": "main",
+  "technical_design": ".quality/docs/hooks/core/nema.ts.md",
+  "test_design": ".quality/test-design/hooks/core/nema.ts.test.md",
+  "prepared_technical_design_sha256": "d9b6f0dc87875a475c0fae3828ea802fde0efd90bc945ff71e9f4580cd118e84",
+  "prepared_test_design_sha256": "30852548d222880d44ce85574e1b910f70b75a3b80a72a9a961ad394ec0bd2b1",
+  "prepared_related_design_sha256": {}
+}

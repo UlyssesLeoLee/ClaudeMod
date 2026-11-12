@@ -29,6 +29,7 @@ Unit tests of the pure functions in tests/nema.test.tsx, with inputs taken from 
 ## Boundary & Failure Cases
 
 - An error stops reading; domains before it are kept (TC-007).
+- ` \1 1 x` (text after the revision) is a malformed header, not a record (TC-007).
 - Continuation onto null or missing is an error (TC-004 file, error variants).
 - `domainChanges` of identical states is empty (TC-011).
 

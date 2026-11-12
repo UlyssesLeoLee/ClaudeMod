@@ -36,6 +36,7 @@ None: no engine calls and no imports from the features. Callers read the file (`
 
 - Types `NemaMode`, `NemaDomain`, `NemaParse`, `NemaDomainState`, `NemaChange` (state types declared in `types/index.d.ts`).
 - `parseNema` never throws; a file is valid exactly when `error === ''`.
+- A line that starts like a header (` \1`, ` \?2`, ` \>3`) but does not match it exactly — extra text after the revision, a missing revision — is a malformed header, never a body line.
 - `domainChanges` lists domains in ID order; an unchanged domain is not listed.
 
 ## Change Notes
