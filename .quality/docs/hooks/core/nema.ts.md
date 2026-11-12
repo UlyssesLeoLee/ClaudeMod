@@ -30,7 +30,7 @@ Functions:
 
 ## Dependencies
 
-None.
+None: no engine calls and no imports from the features. Callers read the file (`$.fs.read`, or `git show` for a commit's version) and pass its text in. Used by `hooks/doclinks/pane.tsx`, `hooks/overview/wbs.ts` and `hooks/branches/pane.tsx`.
 
 ## Public Contract
 
