@@ -2,6 +2,74 @@
 
 Claude Code 的 mod：在聊天旁边提供多个功能窗格，以及输入框上方的一行按钮（📋 任务概要、📚 关联文档、🌿 分支记录）。除了下面写明的自动更新，所有 Git、文件扫描和模型调用都只在你点按钮或输入命令时执行。
 
+## 安装
+
+### 1. 安装前
+
+- **许可证要求**：安装或使用本 mod 之前，须发邮件通知作者 lidian727@gmail.com（见 [LICENSE](LICENSE)）。
+- **Claude Code**：命令行版或桌面版均可，下面的命令在终端里执行。
+- **Git**：分支变更、任务概要的核对和提交详情需要。
+- **Python 3**（`python` 或 `py -3` 能运行即可）：读取 Excel 文档内容、计算文档 SHA256；没有时相关功能会在窗格里提示，其余照常可用。
+- **Windows 的 PowerShell**：「📂 文件夹」用它把资源管理器窗口切到前台；没有时退回用 `explorer.exe` 打开。
+
+### 2. 安装
+
+把这个仓库加为插件市场，再安装 dev-cockpit：
+
+```bash
+claude plugin marketplace add UlyssesLeoLee/ClaudeMod
+```
+
+```bash
+claude plugin install dev-cockpit@dev-cockpit
+```
+
+也可以一步完成（未加入的市场会先自动加入）：
+
+```bash
+claude plugin install dev-cockpit --marketplace UlyssesLeoLee/ClaudeMod
+```
+
+### 3. 确认已加载
+
+安装后**新开一个会话**（已打开的会话不会加载新插件）：
+
+- 输入框上方出现「📋 任务概要」「📚 关联文档」「🌿 分支记录」三个按钮，分支变更窗格自动打开；
+- 每个窗格底部显示「dev-cockpit 版本 · 代码 时间」；
+- `/branch-status`、`/doc-links`、`/task-overview` 三个命令可用。
+
+### 4. 更新
+
+```bash
+claude plugin marketplace update dev-cockpit
+```
+
+```bash
+claude plugin update dev-cockpit@dev-cockpit
+```
+
+更新后新开会话生效。会话打开期间 mod 的代码被更新时，窗格底部会出现黄色的「⚠ mod 代码已在 … 更新，本会话仍在用旧代码：重开会话后生效」。
+
+### 5. 卸载
+
+```bash
+claude plugin uninstall dev-cockpit@dev-cockpit
+```
+
+```bash
+claude plugin marketplace remove dev-cockpit
+```
+
+### 从源码使用（开发者）
+
+不通过插件市场、直接用本地的源码：
+
+```bash
+git clone https://github.com/UlyssesLeoLee/ClaudeMod.git
+```
+
+然后在 `~/.claude/settings.json` 的 `env` 里把 `CLAUDE_CODE_PLUGIN_DIRS` 设为克隆下来的文件夹（例如 `"CLAUDE_CODE_PLUGIN_DIRS": "C:/Users/<你>/ClaudeMod"`），新开会话即可。用这种方式时不要再从插件市场安装，否则同一个 mod 会加载两份。
+
 ## 分支变更（`/branch-status`）
 
 - 查看 master、main、develop、dev 及你加入保护的分支的提交记录：可折叠，右侧是时间和作者；悬停看说明，点「📄 全文」打开提交详情。
@@ -35,22 +103,7 @@ Claude Code 的 mod：在聊天旁边提供多个功能窗格，以及输入框�
 - 关联文档：`.nema` 文件和其他文档一样参与扫描和关联，AI 读的是它的领域摘要。关联时记下每个领域的修订号和指纹，「🔄 检查状态」后列出哪些领域被改过、新增或删除；内容改了但修订号没加的领域标黄，语法错误标红并给出行号。更新文档的指令会要求 Claude 只改相关领域并把修订号加 1。
 - 任务概要：没有 `docs/WBS.md` 时读取 `docs/WBS.nema`，取其中第一个带「任务」列的表格领域。
 - 分支变更：点开一条提交的「提交详情」时，列出它改动的 `.nema` 文件里哪些领域变了、修订号是否增加。
-
-## 需要的环境
-
-- Git；Python 3（读取 Excel 内容、计算 SHA256；没有时相关功能会提示）；Windows 上的「📂 文件夹」用 PowerShell 把窗口切到前台。
-- 窗格底部的「dev-cockpit 版本 · 代码 时间」显示当前会话加载的是哪一版。mod 的代码在会话打开后又更新过时，底部会出现黄色的「⚠ mod 代码已在 … 更新，本会话仍在用旧代码：重开会话后生效」。
-
-## 安装
-
-在 Claude Code 里先加入这个仓库作为插件市场，再安装：
-
-```
-claude plugin marketplace add UlyssesLeoLee/ClaudeMod
-claude plugin install dev-cockpit@dev-cockpit
-```
-
-也可以从本机文件夹安装：`claude plugin marketplace add <本文件夹路径>`，再 `claude plugin install dev-cockpit@dev-cockpit`。
+- 以 CRLF 换行的 `.nema` 文件按 LF 读取（Windows 上 Git 检出时会转成 CRLF）。
 
 ## 新增功能
 
@@ -61,7 +114,7 @@ claude plugin install dev-cockpit@dev-cockpit
 | `hooks/branches/` | 分支变更 |
 | `hooks/doclinks/` | 关联文档 |
 | `hooks/overview/` | 任务概要 |
-| `hooks/core/` | 公共部分：版本行、Git 与脚本调用、按项目保存、路径和时间 |
+| `hooks/core/` | 公共部分：版本行、Git 与脚本调用、按项目保存、.nema 解析、路径和时间 |
 
 新功能放在 `hooks/<名字>/`，导出 `startX($)`（会话开始时的准备）、`registerX(on)`（命令和窗格）、`openX($)`（打开窗格），然后在 `hooks/main.tsx` 的三处各加一行；状态键写进 `types/index.d.ts` 的 `dev-cockpit` 下。
 
