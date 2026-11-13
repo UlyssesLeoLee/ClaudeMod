@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "source": "hooks/core/where.ts",
+  "baseline_source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "prepared_branch": "main",
+  "technical_design": ".quality/docs/hooks/core/where.ts.md",
+  "test_design": ".quality/test-design/hooks/core/where.ts.test.md",
+  "prepared_technical_design_sha256": "6e729f9bf05ccae65c89a54d7dd1942eff9c7c718aec251f0ea47564421d2c52",
+  "prepared_test_design_sha256": "0f41ea483f79a9fcde48b9ddfd1c97d8fd5d363d2bca031cd6192086d79ca580",
+  "prepared_related_design_sha256": {}
+}

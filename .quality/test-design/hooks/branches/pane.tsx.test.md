@@ -22,6 +22,10 @@ Integration tests in tests/branches.test.tsx with the `claude-code/testing` kit:
 | TC-008 | Row click / 📄 全文 | `ui.open` `commit-detail` with `focus: true`; full message shown | tests/branches.test.tsx#clicking a commit row opens its whole message in a pane of its own; tests/branches.test.tsx#every row has a visible 全文 button, and the hover preview a real one |
 | TC-009 | 🛡 保护 on a queried branch | Joins the default list; kept across sessions | tests/branches.test.tsx#a queried branch can be protected, and then joins the default list; tests/branches.test.tsx#the protected list is kept across sessions |
 | TC-010 | Detail of a commit that changed one `.nema` file: one domain revised, one changed without revision, one added | The detail lists the file and the three domain changes; no git runs before the row is clicked | tests/branches.test.tsx#the detail of a commit that changed a .nema file lists the domains it changed |
+| TC-011 | Session start, branch pane mounted, no `.git` above the working directory | The path and `不是 Git 仓库` are shown and no process ran | tests/where.test.tsx#the branch pane shows the path before any git runs, even outside a repository |
+| TC-012 | Working directory inside a linked worktree | The pane names the worktree and its main working tree | tests/where.test.tsx#a linked worktree is named with its main working tree |
+| TC-013 | Edits inside the project, in another repository and in the temp folder, and a failed edit | Places listed with counts; the failed edit is not counted | tests/where.test.tsx#edits are recorded where they land: inside the project, in another repository, in the temp folder |
+| TC-014 | A shell command after which the working directory is a subfolder | The shown running directory follows | tests/where.test.tsx#a shell cd moves the shown working directory |
 
 ## Boundary & Failure Cases
 
@@ -30,6 +34,7 @@ Integration tests in tests/branches.test.tsx with the `claude-code/testing` kit:
 - A read that fails stops a delete ("a read that fails stops the delete instead of calling it safe").
 - More than 40 merges / 50 older AI rows: capped while the alarm counts all ("one walk judges at most 40 merges …"; "older AI rows are capped at 50 …").
 - A leftover revert worktree is cleared first ("a revert worktree left by a run cut short is cleared before the next revert").
+- Before the first read, or when reading fails, the pane shows no path block rather than a wrong one (TC-011 fixture without `session.root`).
 
 ## Regression Scope
 
