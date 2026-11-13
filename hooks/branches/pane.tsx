@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import type { BranchInfo, Busy, Commit, Detail, NemaFile, Snapshot, Worktree, WorktreePlan } from '../../types'
+import type { BranchInfo, Busy, Commit, Detail, EditPlace, NemaFile, Snapshot, Where, Worktree, WorktreePlan } from '../../types'
 import { changeText, domainChanges, domainStates, parseNema } from '../core/nema'
 import {
   BUILT_IN_PROTECTED,
@@ -32,7 +32,8 @@ import {
 import type { BranchInput } from './logic'
 import { buildFooter } from '../core/build'
 import { runGit as git } from '../core/files'
-import { fullTime, relTime } from '../core/util'
+import { fullTime, relTime, samePath } from '../core/util'
+import { addEdit, editNotes, editPlace, readWhere, touchedPath, whereNotes } from '../core/where'
 
 const PANE = 'branch-status'
 const TITLE = '分支变更'
@@ -91,6 +92,17 @@ const detail = atom(
   null as Detail | null,
   { shape: 'detail-1' },
 )
+
+// Where the session works, and where this session's Edit/Write edits landed.
+const where = atom({ plugin: 'dev-cockpit', key: 'where' } as const, null as Where | null, { shape: 'where-1' })
+const edits = atom({ plugin: 'dev-cockpit', key: 'edits' } as const, [] as EditPlace[], { shape: 'edits-1' })
+
+const NOTE_COLOR = { info: undefined, warn: 'yellow', dim: undefined } as const
+
+async function noteWhere($: EngineInterface) {
+  const read1 = await readWhere($)
+  await update($, where, () => read1)
+}
 
 const DETAIL_PANE = 'commit-detail'
 
@@ -223,6 +235,7 @@ async function query($: EngineInterface, text: string): Promise<boolean> {
   running = true
   await update($, busy, () => 'query')
   try {
+    await noteWhere($)
     const input = parseBranchInput(text, await readProtected($))
     const list = input.names.join(' ')
     draft = undefined
@@ -479,6 +492,8 @@ export async function startBranches($: EngineInterface) {
   await update($, busy, () => '')
   await update($, confirming, () => '')
   await update($, wtPlan, () => null)
+  await update($, edits, () => [])
+  await noteWhere($)
   await $.command.register({
     name: 'branch-status',
     description: '打开分支变更面板；带分支名（/branch-status master develop）则按它们查询',
@@ -486,6 +501,33 @@ export async function startBranches($: EngineInterface) {
 }
 
 export function registerBranches(on: On) {
+  // Counts each finished Edit/Write by where the file landed, and notices a shell `cd`
+  // (the working directory moved). Never in a call's way: it returns the call's own result.
+  // A matched registration: the engine allows one unmatched tool.call hook per plugin, and
+  // the doc feature holds it.
+  on('tool.call', { tool: /^(Edit|Write|MultiEdit|NotebookEdit|Bash)$/ }, async ($, e, next) => {
+    const result = await next(e)
+    try {
+      const isMain = (e as { agentId?: string }).agentId === undefined
+      let w = await read($, where)
+      const cwd = await $.session.cwd()
+      if (isMain && w !== null && !samePath(cwd, w.cwd)) {
+        await noteWhere($)
+        w = await read($, where)
+      }
+      const file = touchedPath(e.tool, e as unknown as Record<string, unknown>, cwd)
+      const isDone = !('deny' in result && result.deny) && result.isError !== true
+      if (file !== '' && isDone && w !== null) {
+        const at = await editPlace($, file, w)
+        const now = await $.clock.now()
+        await update($, edits, list => addEdit(list, at, now))
+      }
+    } catch {
+      // Showing where edits went is a helper: it never stands in a tool call's way.
+    }
+    return result
+  })
+
   // `/branch-status master develop` sets the list and queries it: the way to change
   // branches where a surface draws no input field.
   on('command.run', { command: 'branch-status' }, async ($, e) => {
@@ -580,6 +622,10 @@ export function registerBranches(on: On) {
     const ownGuarded = await readAdded($)
     const now = await $.clock.now()
     const alarms = recentAiCount(s.branches)
+    const here = await read($, where)
+    const landed = await read($, edits)
+    const hereNotes = here === null ? [] : whereNotes(here)
+    const landedNotes = editNotes(landed)
 
     const status =
       state === 'query'
@@ -594,6 +640,25 @@ export function registerBranches(on: On) {
 
     return (
       <Box flexDirection="column">
+        {hereNotes.length > 0 && (
+          <Box flexDirection="column" marginBottom={1}>
+            {hereNotes.map(n => (
+              <Text color={NOTE_COLOR[n.tone]} dimColor={n.tone === 'dim'} wrap="wrap" bold={n.text.startsWith('📍')}>
+                {n.text}
+              </Text>
+            ))}
+            {landedNotes.length > 0 && <Text bold>本会话改过的文件落在：</Text>}
+            {landedNotes.map(n => (
+              <Text color={NOTE_COLOR[n.tone]} dimColor={n.tone === 'dim'} wrap="wrap">
+                {'  '}
+                {n.text}
+              </Text>
+            ))}
+            {landedNotes.length > 0 && (
+              <Text dimColor>只统计 Edit/Write 类工具改的文件；用命令行（Bash）写的文件不在其中。</Text>
+            )}
+          </Box>
+        )}
         <Box>
           <Box flexGrow={1} flexShrink={1}>
             <Input

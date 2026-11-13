@@ -14,6 +14,21 @@ export type Commit = {
   // `<hash> <subject>` of each commit a merge brought in, capped; [] otherwise.
   brought: string[]
 }
+// Where the session works: its directory, project root and working tree (read without Git).
+export type WhereKind = 'none' | 'repo' | 'worktree' | 'submodule'
+export type Where = {
+  // $.session.cwd(): where commands run; a shell cd moves it.
+  cwd: string
+  // $.session.root(): the project root the session started in or was moved to.
+  root: string
+  // The working tree's root (the folder holding .git) at or above cwd; null when there is none.
+  top: string | null
+  // The main working tree of a linked worktree; null otherwise.
+  main: string | null
+  kind: WhereKind
+}
+// Where edits by the Edit/Write tools landed this session: inside the project root, outside it, or in Claude's temp folder.
+export type EditPlace = { place: string; kind: 'inside' | 'outside' | 'temp'; count: number; lastMs: number }
 // .nema: a domain's kind, its state as kept for change checks, and how it changed.
 export type NemaMode = 'table' | '5w1h' | 'graph'
 export type NemaDomainState = { id: number; mode: NemaMode; revision: number; fingerprint: string }
@@ -204,6 +219,10 @@ declare module 'claude-code' {
       ovConfirm: Shaped<boolean>
       // What became of the last create-WBS press.
       ovNote: Shaped<string>
+      // Where the session works, read at session start and when it may have moved; null until read.
+      where: Shaped<Where | null>
+      // Where this session's Edit/Write edits landed.
+      edits: Shaped<EditPlace[]>
       // The unfinished tasks past the first 30 are listed.
       ovShowAll: Shaped<boolean>
       // Tasks whose full text the person pinned open, by 编号.

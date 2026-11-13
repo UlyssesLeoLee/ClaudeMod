@@ -78,6 +78,10 @@ git clone https://github.com/UlyssesLeoLee/ClaudeMod.git
 - 「↩ 撤销」只出现在完全由你写的 AI 改动上：在临时工作区生成 revert，推送为 `revert/<哈希>` 分支，不改受保护分支。
 - Worktree 列表：当前所在的高亮；可删除，删除前列出未提交改动、未合并提交、不在任何分支上的提交和被忽略的文件。
 - 命令：`/branch-status master develop` 按这些分支查询。
+- 窗格最上面一直显示当前在哪里干活，不需要点任何按钮、不运行 Git，不是 Git 仓库的文件夹也显示：
+  - `📍 运行目录`：命令实际运行的目录（在终端里 `cd` 之后会跟着变）；与项目根不同时单独列出项目根，运行目录不在项目根下会标黄。
+  - Git 状态：不是 Git 仓库、普通仓库、linked worktree（标出主工作区在哪，提醒本会话的改动在 worktree 文件夹里、主工作区看不到）或子模块。
+  - 「本会话改过的文件落在」：按 Edit/Write 类工具的实际落点统计——项目内、项目根之外（写出所在仓库的根目录）、Claude 的会话临时目录（`…\Temp\claude\…\scratchpad`，Claude 放中间文件的地方），最多列 6 处。用命令行（Bash）写的文件不在统计里。
 
 ## 关联文档（`/doc-links`）
 

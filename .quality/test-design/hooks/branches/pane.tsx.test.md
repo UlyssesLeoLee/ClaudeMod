@@ -2,7 +2,7 @@
 
 Source: `hooks/branches/pane.tsx`
 
-Source-SHA256: `c0994e8b30ebf6146fb892c74c8b74f0ced7750bc2f0c1dd6d93cc83e35e56bf`
+Source-SHA256: `392dc8876c1b08c8d4e623a47017ce0ed7f6fd08e84ad0a3a36fb5eaea202b8a`
 
 ## Test Strategy
 
@@ -34,7 +34,7 @@ Integration tests in tests/branches.test.tsx with the `claude-code/testing` kit:
 - A read that fails stops a delete ("a read that fails stops the delete instead of calling it safe").
 - More than 40 merges / 50 older AI rows: capped while the alarm counts all ("one walk judges at most 40 merges …"; "older AI rows are capped at 50 …").
 - A leftover revert worktree is cleared first ("a revert worktree left by a run cut short is cleared before the next revert").
-- Before the first read, or when reading fails, the pane shows no path block rather than a wrong one (TC-011 fixture without `session.root`).
+- Before the first read, or when the working directory cannot be read, the pane shows no path block rather than a wrong one (tests/where.test.tsx#a working directory that cannot be read shows no path rather than a wrong one).
 
 ## Regression Scope
 

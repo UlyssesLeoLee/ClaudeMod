@@ -2,7 +2,7 @@
 
 Source: `hooks/core/where.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `ba46b29e2a79889f9ee60053766f00bd3f53698f835b58a14819d2da46ebdfb1`
 
 ## Test Strategy
 
@@ -29,7 +29,8 @@ Unit tests of the pure functions in tests/where.test.tsx, and integration tests 
 - A `.git` file with no `gitdir:` line leaves `none` (TC-001 and TC-007 fixtures).
 - A relative edit path is resolved against the working directory read in the hook, so a shell `cd` before the call is honoured (TC-004).
 - An edit outside every repository is placed in its own folder (TC-009 fixture).
+- A working directory that cannot be read gives no `Where` and so no path block, never a wrong one (tests/where.test.tsx#a working directory that cannot be read shows no path rather than a wrong one).
 
 ## Regression Scope
 
-The branch pane's header and state, the session start of every feature (the new `session.root` and `fs.stat` calls are faked in each test file that starts a session), and the existing doc pane `tool.call` hook, which must still see every edit.
+The branch pane's header and state, the session start of every feature (a test file whose fake engine has no `session.root` or `fs.stat` still starts its session, because `readWhere` swallows what those calls reject with), and the existing doc pane `tool.call` hook, which must still see every edit: tests/review-sync.test.tsx runs with both hooks registered.

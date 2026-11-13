@@ -2,7 +2,7 @@
 
 Source: `hooks/branches/pane.tsx`
 
-Source-SHA256: `c0994e8b30ebf6146fb892c74c8b74f0ced7750bc2f0c1dd6d93cc83e35e56bf`
+Source-SHA256: `392dc8876c1b08c8d4e623a47017ce0ed7f6fd08e84ad0a3a36fb5eaea202b8a`
 
 ## Responsibility
 
@@ -31,7 +31,7 @@ The 分支变更 feature: the `branch-status` pane, the `commit-detail` pane, an
 - State keys under `dev-cockpit`: `snapshot`, `open`, `branches`, `protectedAdded`, `busy`, `confirming`, `reverts`, `detail`, `alarm`, `wtPlan`, `wtNote`.
 - `Detail.nema` (optional): `{ path: string; changes: NemaChange[]; error: string }[]`.
 - State keys `where` (`Where | null`; null until session start has read it) and `edits` (`EditPlace[]`).
-- The `tool.call` hook never blocks, alters or delays a call: it returns `next(e)`'s result, and its own failures are swallowed.
+- The `tool.call` hook is a matched registration on `Edit`, `Write`, `MultiEdit`, `NotebookEdit` and `Bash` (the engine allows one unmatched `tool.call` hook per plugin, and the doc feature holds it). It never blocks, alters or delays a call: it returns `next(e)`'s result, and its own failures are swallowed. A `Bash` call only makes it look at the working directory again; a call made inside a subagent does not move the shown directory.
 
 ## Change Notes
 

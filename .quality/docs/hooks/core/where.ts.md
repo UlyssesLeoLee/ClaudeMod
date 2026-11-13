@@ -2,7 +2,7 @@
 
 Source: `hooks/core/where.ts`
 
-Source-SHA256: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+Source-SHA256: `ba46b29e2a79889f9ee60053766f00bd3f53698f835b58a14819d2da46ebdfb1`
 
 ## Responsibility
 
@@ -12,11 +12,11 @@ Tells where a session works and where its edits land, with no Git process, so it
 - `readWhere($)` reads those with `$.session.cwd`, `$.session.root`, `$.fs.stat` and `$.fs.read`; it never throws (a failed read gives `kind: 'none'`).
 - `gitdirMain(text)` reads a `.git` file's text: `{ kind: 'worktree', main }`, `{ kind: 'submodule', main: null }`, or `null` when there is no `gitdir:` line; slashes of either kind and a trailing newline are accepted.
 - `isUnder(path, folder)` is true for the folder itself and anything below it, compared at folder boundaries (`C:/proj2` is not under `C:/proj`), case and slash insensitive.
-- `whereNotes(w)` is the pane's lines, each `{ text, tone }` with tone `info`, `warn` or `dim`: `📍 运行目录：<cwd>`; `项目根：<root>` when it differs from `cwd`, with a warning when `cwd` is not under `root`; then the Git state: not a repository, a repository (noting a project root that is a subfolder of it), a worktree (naming its main working tree and saying the main working tree does not see this session's edits), or a submodule.
+- `Note` is `{ text, tone }`. `whereNotes(w)` is the pane's lines, each `{ text, tone }` with tone `info`, `warn` or `dim`: `📍 运行目录：<cwd>`; `项目根：<root>` when it differs from `cwd`, with a warning when `cwd` is not under `root`; then the Git state: not a repository, a repository (noting a project root that is a subfolder of it), a worktree (naming its main working tree and saying the main working tree does not see this session's edits), or a submodule.
 - `touchedPath(tool, input, cwd)` is the file an `Edit`, `Write`, `MultiEdit` or `NotebookEdit` call changed, absolute with forward slashes (a relative path is taken from `cwd`), else `''`.
 - `isTempPath(path)` is true for a file in Claude's per-session temp folder: a path with a `temp` or `tmp` folder followed by a folder starting `claude`, and a `scratchpad` folder below it. `tempPlace(path)` is that scratchpad folder.
-- `EditPlace` = `{ place, kind, count, lastMs }` with kind `inside` (under `root`), `outside` or `temp`. `addEdit(places, { place, kind }, now)` counts one more file edit there and keeps at most 6 places, dropping the one touched longest ago. `editNotes(places, root)` says each place, newest first: `✔ 项目内 <root> · N 次`, `⚠ <place> · N 次（不在项目根下）`, `🗂 临时目录 <place> · N 次（Claude 放中间文件的地方）`.
-- `editPlace($, file, w, now)` finds where one edited file belongs: the temp folder, `root` when the file is under it, else the nearest repository root above the file (`$.fs.stat` of `.git`, at most 10 levels, remembered per folder) or the file's own folder.
+- `EditPlace` = `{ place, kind, count, lastMs }` (a `Place` is its `place` and `kind`) with kind `inside` (under `root`), `outside` or `temp`. `addEdit(places, { place, kind }, now)` counts one more file edit there and keeps at most 6 places, dropping the one touched longest ago. `editNotes(places)` says each place, newest first: `✔ 项目内 <root> · N 次`, `⚠ <place> · N 次（不在项目根下）`, `🗂 临时目录 <place> · N 次（Claude 放中间文件的地方）`.
+- `editPlace($, file, w)` finds where one edited file belongs, as a `Place` (`{ place, kind }`): the temp folder, `root` when the file is under it, else the nearest repository root above the file (`$.fs.stat` of `.git`, at most 10 levels, remembered per folder) or the file's own folder.
 
 ## Dependencies
 
