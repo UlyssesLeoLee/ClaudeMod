@@ -46,7 +46,7 @@ Claude Code 的 mod：在聊天旁边提供多个功能窗格，以及输入框�
 在 Claude Code 里先加入这个仓库作为插件市场，再安装：
 
 ```
-claude plugin marketplace add <GitHub 账号>/ClaudeMod
+claude plugin marketplace add UlyssesLeoLee/ClaudeMod
 claude plugin install dev-cockpit@dev-cockpit
 ```
 
